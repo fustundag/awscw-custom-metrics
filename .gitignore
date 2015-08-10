@@ -1,0 +1,8 @@
+vagrant
+vendor
+composer.lock
+.DS_Store
+log
+phpunit.xml
+.idea
+tests/_output/*
