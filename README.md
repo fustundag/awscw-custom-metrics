@@ -5,7 +5,7 @@ You can send custom metrics to AWS CloudWatch like disk/memory usage
 ## Usage
 
 ### Basic usage
-1. Create php file like awscw-agent.php
+- Create php file like awscw-agent.php
 ``` php
 <?php
 
@@ -23,9 +23,10 @@ $cwSender->run();
 
 // ...
 ```
-2. Add to cron like :
-
+- Add to cron like :
+``` shell
 */10 * * * * /path/to/php /path/to/awscw-agent.php
+```
 
 ## TODO
 * NOT TESTED.
