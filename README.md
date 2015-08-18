@@ -1,4 +1,4 @@
-# AWS CloudWatch Custom Metrics
+# AWS CloudWatch Custom Metrics [![Build Status](https://travis-ci.org/fustundag/awscw-custom-metrics.svg?branch=master)](https://travis-ci.org/fustundag/awscw-custom-metrics)
 
 You can send custom metrics to AWS CloudWatch like disk/memory usage
 
