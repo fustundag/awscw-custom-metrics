@@ -1,5 +1,5 @@
 <?php
-namespace AWSCustomMetric\Metric;
+namespace AWSCustomMetric;
 
 class MetricTest extends \Codeception\TestCase\Test
 {

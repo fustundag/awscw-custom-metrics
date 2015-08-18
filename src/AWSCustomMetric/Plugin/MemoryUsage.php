@@ -4,9 +4,15 @@ namespace AWSCustomMetric\Plugin;
 
 use AWSCustomMetric\Logger\LoggerInterface;
 use AWSCustomMetric\Metric;
+use AWSCustomMetric\CommandRunner;
 
 class MemoryUsage implements MetricPluginInterface
 {
+    /**
+     * @var CommandRunner
+     */
+    private $cmdRunner;
+
     /**
      * @var LoggerInterface
      */
@@ -14,12 +20,21 @@ class MemoryUsage implements MetricPluginInterface
 
     private $namespace = 'CustomMetric/System';
 
-    public function __construct($namespace = '', LoggerInterface $logger = null)
+    public function __construct($namespace = '', LoggerInterface $logger = null, CommandRunner $cmdRunner = null)
     {
         if ($namespace) {
             $this->namespace = $namespace;
         }
         $this->logger = $logger;
+        $this->cmdRunner = $cmdRunner;
+    }
+
+    /**
+     * @return string
+     */
+    public function getNamespace()
+    {
+        return $this->namespace;
     }
 
     /**
@@ -27,9 +42,9 @@ class MemoryUsage implements MetricPluginInterface
      */
     public function getMetrics()
     {
-        $retVal = null;
-        $memInfoLines = null;
-        @exec('/bin/cat /proc/meminfo', $memInfoLines, $retVal);
+        $this->cmdRunner->execute('/bin/cat /proc/meminfo');
+        $retVal = $this->cmdRunner->getReturnCode();
+        $memInfoLines = $this->cmdRunner->getOutput();
         $memInfo = [];
         if ($retVal==0) {
             foreach ($memInfoLines as $memInfoLine) {

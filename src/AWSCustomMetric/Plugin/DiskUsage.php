@@ -2,11 +2,17 @@
 
 namespace AWSCustomMetric\Plugin;
 
+use AWSCustomMetric\CommandRunner;
 use AWSCustomMetric\Logger\LoggerInterface;
 use AWSCustomMetric\Metric;
 
 class DiskUsage implements MetricPluginInterface
 {
+    /**
+     * @var CommandRunner
+     */
+    private $cmdRunner;
+
     /**
      * @var LoggerInterface
      */
@@ -14,22 +20,30 @@ class DiskUsage implements MetricPluginInterface
 
     private $namespace = 'CustomMetric/System';
 
-    public function __construct($namespace = '', LoggerInterface $logger = null)
+    public function __construct($namespace = '', LoggerInterface $logger = null, CommandRunner $cmdRunner = null)
     {
         if ($namespace) {
             $this->namespace = $namespace;
         }
         $this->logger = $logger;
+        $this->cmdRunner = $cmdRunner;
     }
 
     /**
-     * @return array|bool|null
+     * @return string
+     */
+    public function getNamespace()
+    {
+        return $this->namespace;
+    }
+
+    /**
+     * @return array|null
      */
     public function getMetrics()
     {
-        $retVal   = null;
-        $out      = null;
-        $diskUtil = intval(@exec('/bin/df -k -l --output=pcent /', $out, $retVal));
+        $this->cmdRunner->execute('/bin/df -k -l --output=pcent /');
+        $diskUtil = intval($this->cmdRunner->getReturnValue());
         if ($diskUtil>0) {
             $metric = new Metric();
             $metric->setNamespace($this->namespace);

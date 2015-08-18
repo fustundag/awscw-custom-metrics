@@ -146,7 +146,7 @@ class Sender
             $pluginClassName = "AWSCustomMetric\\Plugin\\" . $plugin;
             if (class_exists($pluginClassName)) {
                 /* @var MetricPluginInterface $pluginObj */
-                $pluginObj = new $pluginClassName($this->namespace, $this->logger);
+                $pluginObj = new $pluginClassName($this->namespace, $this->logger, new CommandRunner());
                 $metrics   = $pluginObj->getMetrics();
                 if (is_array($metrics)) {
                     foreach ($metrics as $metric) {
