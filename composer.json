@@ -1,7 +1,7 @@
 {
   "name": "fustundag/awscw-custom-metrics",
-  "description": "Send custom metric data to AWS CloudWatch For PHP",
-  "keywords": ["aws", "amazon", "cloudwatch", "metric", "custom", "data", "alert"],
+  "description": "Send custom metric data to AWS CloudWatch for PHP",
+  "keywords": ["aws", "amazon", "cloudwatch", "metric", "custom", "data", "alert", "monitor"],
   "homepage": "http://github.com/fustundag/awscw-custom-metrics",
   "type": "library",
   "license": "MIT",
@@ -14,7 +14,7 @@
   ],
   "require": {
     "php": ">=5.5",
-    "aws/aws-sdk-php": "3.2.*"
+    "aws/aws-sdk-php": "3.2.*@stable"
   },
   "require-dev": {
     "squizlabs/php_codesniffer": "2.3.*@stable",
