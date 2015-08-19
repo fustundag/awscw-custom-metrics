@@ -36,6 +36,13 @@ For AWS EC2 instances, some meta-data can be obtained from system like instance-
 ```
 While creating Sender object, if you dont give instance-id param, class tries to find instance-id using above cmd.
 
+## Installation
+You can use Composer to install :
+
+``` shell
+composer require fustundag/awscw-custom-metrics
+```
+
 ## TODO
 * ~~NOT TESTED.~~ 86% Coverage
 * MORE PLUGINS.
