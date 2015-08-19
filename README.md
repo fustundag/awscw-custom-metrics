@@ -10,10 +10,11 @@ You can send custom metrics to AWS CloudWatch like disk/memory usage
 <?php
 
 use AWSCustomMetric\Sender as CWSender;
+use AWSCustomMetric\CommandRunner;
 
 try {
 // Create the Sender
-$cwSender = new CWSender("AWS_KEY", "AWS_SECRET", "AWS_REGION");
+$cwSender = new CWSender("AWS_KEY", "AWS_SECRET", "AWS_REGION", new CommandRunner());
 $cwSender->setNamespace('Custom/System');
 $cwSender->addPlugin(['DiskUsage', 'MemoryUsage']);
 $cwSender->run();
@@ -28,8 +29,16 @@ $cwSender->run();
 */10 * * * * /path/to/php /path/to/awscw-agent.php
 ```
 
+### Auto Discover InstanceId
+For AWS EC2 instances, some meta-data can be obtained from system like instance-id : 
+``` shell
+/usr/bin/wget -q -O - http://169.254.169.254/latest/meta-data/instance-id
+```
+While creating Sender object, if you dont give instance-id param, class tries to find instance-id using above cmd.
+
 ## TODO
-* NOT TESTED.
+* ~~NOT TESTED.~~ 86% Coverage
+* MORE PLUGINS.
 
 ## Contributing
 You can contribute by forking the repo and creating pull requests. You can also create issues or feature requests.

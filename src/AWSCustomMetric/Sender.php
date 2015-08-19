@@ -17,82 +17,129 @@ class Sender
     private $namespace  = null;
 
     /**
+     * @var CommandRunner
+     */
+    private $cmdRunner;
+
+    /**
      * @var LoggerInterface
      */
     private $logger = null;
 
-    public function __construct($awsKey, $awsSecret, $region, $instanceId = null, $namespace = null)
+    public function __construct(
+        $awsKey,
+        $awsSecret,
+        $region,
+        CommandRunner $cmdRunner,
+        $instanceId = null,
+        $namespace = null
+    )
     {
+        $this->cmdRunner = $cmdRunner;
         $this->awsKey    = $awsKey;
         $this->awsSecret = $awsSecret;
         $this->region    = $region;
-
-        $this->cloudWatchClient = new CloudWatchClient([
-            'region' => $this->region,
-            'credentials' => [
-                'key'   => $this->awsKey,
-                'secre' => $this->awsSecret
-            ]
-        ]);
         if ($instanceId) {
             $this->instanceId = $instanceId;
         } else {
-            $this->instanceId  = @exec('/usr/bin/wget -q -O - http://169.254.169.254/latest/meta-data/instance-id');
+            $this->cmdRunner->execute('/usr/bin/wget -q -O - http://169.254.169.254/latest/meta-data/instance-id');
+            $this->instanceId = $this->cmdRunner->getReturnValue();
         }
-
         $this->namespace = $namespace;
+        $this->initCloudWatchClient();
     }
 
-    private function setCloudWatchClient()
+    public function initCloudWatchClient()
     {
         $this->cloudWatchClient = new CloudWatchClient([
+            'version' => '2010-08-01',
             'region' => $this->region,
             'credentials' => [
                 'key'   => $this->awsKey,
-                'secre' => $this->awsSecret
+                'secret' => $this->awsSecret
             ]
         ]);
     }
 
     /**
-     * @param null $awsKey
+     * @return CloudWatchClient|null
+     */
+    public function getCloudWatchClient()
+    {
+        return $this->cloudWatchClient;
+    }
+
+    /**
+     * @param string $awsKey
      */
     public function setAwsKey($awsKey)
     {
         if ($awsKey && $awsKey!=$this->awsKey) {
             $this->awsKey = $awsKey;
-            $this->setCloudWatchClient();
+            $this->initCloudWatchClient();
         }
     }
 
     /**
-     * @param null $awsSecret
+     * @return string
+     */
+    public function getAwsKey()
+    {
+        return $this->awsKey;
+    }
+
+    /**
+     * @param string $awsSecret
      */
     public function setAwsSecret($awsSecret)
     {
         if ($awsSecret && $awsSecret!=$this->awsSecret) {
-            $this->$awsSecret = $awsSecret;
-            $this->setCloudWatchClient();
+            $this->awsSecret = $awsSecret;
+            $this->initCloudWatchClient();
         }
     }
 
     /**
-     * @param null $region
+     * @return string
+     */
+    public function getAwsSecret()
+    {
+        return $this->awsSecret;
+    }
+
+    /**
+     * @param string $region
      */
     public function setRegion($region)
     {
         if ($region && $region!=$this->region) {
             $this->region = $region;
-            $this->setCloudWatchClient();
+            $this->initCloudWatchClient();
         }
     }
 
     /**
-     * @param null $namespace
+     * @return string
+     */
+    public function getRegion()
+    {
+        return $this->region;
+    }
+
+    /**
+     * @param string $namespace
      */
     public function setNamespace($namespace)
     {
         $this->namespace = $namespace;
+    }
+
+    /**
+     * @return string
+     */
+    public function getNamespace()
+    {
+        return $this->namespace;
     }
 
     /**
@@ -104,14 +151,24 @@ class Sender
     }
 
     /**
+     * @return LoggerInterface
+     */
+    public function getLogger()
+    {
+        return $this->logger;
+    }
+
+    /**
      * @param string|array $plugin
      */
     public function addPlugin($plugin)
     {
-        if (is_string($plugin)) {
-            $plugin = [$plugin];
+        if ($plugin) {
+            if (is_string($plugin)) {
+                $plugin = [$plugin];
+            }
+            $this->plugins = array_unique(array_merge($this->plugins, $plugin));
         }
-        $this->plugins = array_unique(array_merge($this->plugins, $plugin));
     }
 
     /**
@@ -124,11 +181,51 @@ class Sender
         }
     }
 
+    /**
+     * @return array
+     */
+    public function getPlugins()
+    {
+        return $this->plugins;
+    }
+
+    /**
+     * @return string
+     */
+    public function getInstanceId()
+    {
+        return $this->instanceId;
+    }
+
+    /**
+     * @param string $instanceId
+     */
+    public function setInstanceId($instanceId)
+    {
+        $this->instanceId = $instanceId;
+    }
+
+    /**
+     * @return CommandRunner
+     */
+    public function getCmdRunner()
+    {
+        return $this->cmdRunner;
+    }
+
+    /**
+     * @param CommandRunner $cmdRunner
+     */
+    public function setCmdRunner(CommandRunner $cmdRunner)
+    {
+        $this->cmdRunner = $cmdRunner;
+    }
+
     private function sendMetric(Metric $metric)
     {
         $this->cloudWatchClient->putMetricData([
             'Namespace'  => $metric->getNamespace(),
-            'MetricData' => [
+            'MetricData' => [[
                 'Dimensions' => [
                     ['Name' => 'InstanceId', 'Value' => $this->instanceId]
                 ],
@@ -136,7 +233,7 @@ class Sender
                 'Unit' => $metric->getUnit(),
                 'Value' => $metric->getValue(),
                 'Timestamp' => date('Y-m-d') . 'T' . date('H:i:s') . 'Z'
-            ]
+            ]]
         ]);
     }
 
@@ -146,7 +243,7 @@ class Sender
             $pluginClassName = "AWSCustomMetric\\Plugin\\" . $plugin;
             if (class_exists($pluginClassName)) {
                 /* @var MetricPluginInterface $pluginObj */
-                $pluginObj = new $pluginClassName($this->namespace, $this->logger, new CommandRunner());
+                $pluginObj = new $pluginClassName($this->namespace, $this->logger, $this->cmdRunner);
                 $metrics   = $pluginObj->getMetrics();
                 if (is_array($metrics)) {
                     foreach ($metrics as $metric) {

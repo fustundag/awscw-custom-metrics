@@ -6,3 +6,4 @@ log
 phpunit.xml
 .idea
 tests/_output/*
+test-agent.php
