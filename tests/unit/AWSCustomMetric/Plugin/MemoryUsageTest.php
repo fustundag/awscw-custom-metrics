@@ -2,9 +2,11 @@
 
 namespace AWSCustomMetric\Plugin;
 
+use AWSCustomMetric\CommandRunner;
 use AWSCustomMetric\Logger\DefaultLogger;
 use AWSCustomMetric\Metric;
 use Codeception\Util\Stub;
+use Cron\CronExpression;
 
 class MemoryUsageTest extends \Codeception\TestCase\Test
 {
@@ -24,11 +26,39 @@ class MemoryUsageTest extends \Codeception\TestCase\Test
 
     public function testGetNamespace()
     {
-        $memoryUsage = new MemoryUsage('');
-        $this->assertEquals('CustomMetric/System', $memoryUsage->getNamespace(), 'MemoryUsage::getNamespace failed!');
+        $memUsage = new MemoryUsage(new CommandRunner());
+        $this->assertNull($memUsage->getNamespace(), 'MemoryUsage::getNamespace null test failed!');
 
-        $memoryUsage = new MemoryUsage('MyNamespace');
-        $this->assertEquals('MyNamespace', $memoryUsage->getNamespace(), 'MemoryUsage::getNamespace failed!');
+        $memUsage = new MemoryUsage(new CommandRunner(), '');
+        $this->assertEquals('', $memUsage->getNamespace(), 'MemoryUsage::getNamespace empty string failed!');
+
+        $memUsage = new MemoryUsage(new CommandRunner(), 'MyNamespace');
+        $this->assertEquals('MyNamespace', $memUsage->getNamespace(), 'MemoryUsage::getNamespace failed!');
+    }
+
+    public function testSetNamespace()
+    {
+        $memUsage = new MemoryUsage(new CommandRunner());
+        $memUsage->setNamespace('TestSpace');
+        $this->assertEquals('TestSpace', $memUsage->getNamespace(), 'MemoryUsage::setNamespace failed!');
+    }
+
+    public function testGetCronExpression()
+    {
+        $memUsage = new MemoryUsage(new CommandRunner());
+        $this->assertNull($memUsage->getCronExpression(), 'MemoryUsage::getCronExpression null test failed!');
+
+        $cronExpression = CronExpression::factory('*/5 * * * *');
+        $memUsage = new MemoryUsage(new CommandRunner(), '', $cronExpression);
+        $this->assertEquals($cronExpression, $memUsage->getCronExpression(), 'MemoryUsage::getCronExpression failed!');
+    }
+
+    public function testSetCronExpression()
+    {
+        $cronExpression = CronExpression::factory('*/5 * * * *');
+        $memUsage = new MemoryUsage(new CommandRunner());
+        $memUsage->setCronExpression($cronExpression);
+        $this->assertEquals($cronExpression, $memUsage->getCronExpression(), 'MemoryUsage::setCronExpression failed!');
     }
 
     public function testGetMetrics()
@@ -52,7 +82,7 @@ class MemoryUsageTest extends \Codeception\TestCase\Test
             ]
         ]);
 
-        $memoryUsage = new MemoryUsage('CustomMetric/Test', null, $fakeCmdRunner);
+        $memoryUsage = new MemoryUsage($fakeCmdRunner, 'CustomMetric/Test');
         $returnArray = $memoryUsage->getMetrics();
         $this->assertCount(1, $returnArray, 'Memory usage return array failed');
         $this->assertEquals($expectedMetric, $returnArray[0], 'MemoryUsage return metric object failed!');
@@ -70,7 +100,7 @@ class MemoryUsageTest extends \Codeception\TestCase\Test
                 'Inactive:         164928 kB',
             ]
         ]);
-        $memoryUsage   = new MemoryUsage('CustomMetric/Test', null, $fakeCmdRunner);
+        $memoryUsage   = new MemoryUsage($fakeCmdRunner, 'CustomMetric/Test');
         $returnArray = $memoryUsage->getMetrics();
         $this->assertNull($returnArray, 'MemoryUsage return null failed!');
 
@@ -83,7 +113,7 @@ class MemoryUsageTest extends \Codeception\TestCase\Test
                 'Error occured',
             ]
         ]);
-        $memoryUsage   = new MemoryUsage('CustomMetric/Test', new DefaultLogger(), $fakeCmdRunner);
+        $memoryUsage   = new MemoryUsage($fakeCmdRunner, 'CustomMetric/Test', null, new DefaultLogger());
         $returnArray = $memoryUsage->getMetrics();
         $this->assertFalse($returnArray, 'MemoryUsage return false failed!');
     }

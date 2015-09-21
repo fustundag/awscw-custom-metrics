@@ -2,8 +2,10 @@
 
 namespace AWSCustomMetric\Plugin;
 
+use AWSCustomMetric\CommandRunner;
 use AWSCustomMetric\Metric;
 use Codeception\Util\Stub;
+use Cron\CronExpression;
 
 class DiskUsageTest extends \Codeception\TestCase\Test
 {
@@ -23,11 +25,39 @@ class DiskUsageTest extends \Codeception\TestCase\Test
 
     public function testGetNamespace()
     {
-        $diskUsage = new DiskUsage('');
-        $this->assertEquals('CustomMetric/System', $diskUsage->getNamespace(), 'DiskUsage::getNamespace failed!');
+        $diskUsage = new DiskUsage(new CommandRunner());
+        $this->assertNull($diskUsage->getNamespace(), 'DiskUsage::getNamespace null test failed!');
 
-        $diskUsage = new DiskUsage('MyNamespace');
+        $diskUsage = new DiskUsage(new CommandRunner(), '');
+        $this->assertEquals('', $diskUsage->getNamespace(), 'DiskUsage::getNamespace empty string failed!');
+
+        $diskUsage = new DiskUsage(new CommandRunner(), 'MyNamespace');
         $this->assertEquals('MyNamespace', $diskUsage->getNamespace(), 'DiskUsage::getNamespace failed!');
+    }
+
+    public function testSetNamespace()
+    {
+        $diskUsage = new DiskUsage(new CommandRunner());
+        $diskUsage->setNamespace('TestSpace');
+        $this->assertEquals('TestSpace', $diskUsage->getNamespace(), 'DiskUsage::setNamespace failed!');
+    }
+
+    public function testGetCronExpression()
+    {
+        $diskUsage = new DiskUsage(new CommandRunner());
+        $this->assertNull($diskUsage->getCronExpression(), 'DiskUsage::getCronExpression null test failed!');
+
+        $cronExpression = CronExpression::factory('*/5 * * * *');
+        $diskUsage = new DiskUsage(new CommandRunner(), '', $cronExpression);
+        $this->assertEquals($cronExpression, $diskUsage->getCronExpression(), 'DiskUsage::getCronExpression failed!');
+    }
+
+    public function testSetCronExpression()
+    {
+        $cronExpression = CronExpression::factory('*/5 * * * *');
+        $diskUsage = new DiskUsage(new CommandRunner());
+        $diskUsage->setCronExpression($cronExpression);
+        $this->assertEquals($cronExpression, $diskUsage->getCronExpression(), 'DiskUsage::setCronExpression failed!');
     }
 
     public function testGetMetrics()
@@ -41,7 +71,7 @@ class DiskUsageTest extends \Codeception\TestCase\Test
             'getReturnValue' => '56'
         ]);
 
-        $diskUsage   = new DiskUsage('CustomMetric/Test', null, $fakeCmdRunner);
+        $diskUsage   = new DiskUsage($fakeCmdRunner, 'CustomMetric/Test');
         $returnArray = $diskUsage->getMetrics();
         $this->assertCount(1, $returnArray, 'Disk usage return array failed');
         $this->assertEquals($expectedMetric, $returnArray[0], 'DiskUsage return metric object failed!');
@@ -49,7 +79,7 @@ class DiskUsageTest extends \Codeception\TestCase\Test
         $fakeCmdRunner = Stub::make('\AWSCustomMetric\CommandRunner', [
             'getReturnValue' => '0'
         ]);
-        $diskUsage   = new DiskUsage('CustomMetric/Test', null, $fakeCmdRunner);
+        $diskUsage   = new DiskUsage($fakeCmdRunner, 'CustomMetric/Test');
         $returnArray = $diskUsage->getMetrics();
         $this->assertNull($returnArray, 'DiskUsage return null failed!');
     }

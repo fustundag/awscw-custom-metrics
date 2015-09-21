@@ -33,8 +33,7 @@ class Sender
         CommandRunner $cmdRunner,
         $instanceId = null,
         $namespace = null
-    )
-    {
+    ) {
         $this->cmdRunner = $cmdRunner;
         $this->awsKey    = $awsKey;
         $this->awsSecret = $awsSecret;
@@ -159,25 +158,29 @@ class Sender
     }
 
     /**
-     * @param string|array $plugin
+     * @param MetricPluginInterface|MetricPluginInterface[] $plugins
      */
-    public function addPlugin($plugin)
+    public function addPlugin($plugins)
     {
-        if ($plugin) {
-            if (is_string($plugin)) {
-                $plugin = [$plugin];
+        if (is_array($plugins)===false) {
+            $plugins = [$plugins];
+        }
+        foreach ($plugins as $plugin) {
+            $objId = spl_object_hash($plugin);
+            if (isset($this->plugins[$objId])===false) {
+                $this->plugins[$objId] = $plugin;
             }
-            $this->plugins = array_unique(array_merge($this->plugins, $plugin));
         }
     }
 
     /**
-     * @param string $plugin
+     * @param MetricPluginInterface $plugin
      */
     public function removePlugin($plugin)
     {
-        if (in_array($plugin, $this->plugins)) {
-            $this->plugins = array_diff($this->plugins, [$plugin]);
+        $objId = spl_object_hash($plugin);
+        if (isset($this->plugins[$objId])) {
+            unset($this->plugins[$objId]);
         }
     }
 
@@ -221,11 +224,12 @@ class Sender
         $this->cmdRunner = $cmdRunner;
     }
 
-    private function sendMetric(Metric $metric)
+    private function sendMetric($metrics)
     {
-        $this->cloudWatchClient->putMetricData([
-            'Namespace'  => $metric->getNamespace(),
-            'MetricData' => [[
+        $metricData = [];
+        /* @var Metric $metric */
+        foreach ($metrics as $metric) {
+            $metricData[] = [
                 'Dimensions' => [
                     ['Name' => 'InstanceId', 'Value' => $this->instanceId]
                 ],
@@ -233,23 +237,30 @@ class Sender
                 'Unit' => $metric->getUnit(),
                 'Value' => $metric->getValue(),
                 'Timestamp' => date('Y-m-d') . 'T' . date('H:i:s') . 'Z'
-            ]]
+            ];
+        }
+        $this->cloudWatchClient->putMetricData([
+            'Namespace'  => $metric->getNamespace()?:$this->getNamespace(),
+            'MetricData' => $metricData
         ]);
     }
 
     public function run()
     {
+        $pluginsWillBeRunned = [];
         foreach ($this->plugins as $plugin) {
-            $pluginClassName = "AWSCustomMetric\\Plugin\\" . $plugin;
-            if (class_exists($pluginClassName)) {
-                /* @var MetricPluginInterface $pluginObj */
-                $pluginObj = new $pluginClassName($this->namespace, $this->logger, $this->cmdRunner);
-                $metrics   = $pluginObj->getMetrics();
-                if (is_array($metrics)) {
-                    foreach ($metrics as $metric) {
-                        $this->sendMetric($metric);
-                    }
+            if ($plugin instanceof MetricPluginInterface) {
+                if (is_null($plugin->getCronExpression()) || $plugin->getCronExpression()->isDue()) {
+                    $pluginsWillBeRunned[] = $plugin;
                 }
+            }
+        }
+
+        /* @var MetricPluginInterface $plugin */
+        foreach ($pluginsWillBeRunned as $plugin) {
+            $metrics = $plugin->getMetrics();
+            if (is_array($metrics) && count($metrics)>0) {
+                $this->sendMetric($metrics);
             }
         }
     }

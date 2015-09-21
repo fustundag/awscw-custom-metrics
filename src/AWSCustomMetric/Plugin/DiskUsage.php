@@ -2,41 +2,10 @@
 
 namespace AWSCustomMetric\Plugin;
 
-use AWSCustomMetric\CommandRunner;
-use AWSCustomMetric\Logger\LoggerInterface;
 use AWSCustomMetric\Metric;
 
-class DiskUsage implements MetricPluginInterface
+class DiskUsage extends BaseMetricPlugin implements MetricPluginInterface
 {
-    /**
-     * @var CommandRunner
-     */
-    private $cmdRunner;
-
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-
-    private $namespace = 'CustomMetric/System';
-
-    public function __construct($namespace = '', LoggerInterface $logger = null, CommandRunner $cmdRunner = null)
-    {
-        if ($namespace) {
-            $this->namespace = $namespace;
-        }
-        $this->logger = $logger;
-        $this->cmdRunner = $cmdRunner;
-    }
-
-    /**
-     * @return string
-     */
-    public function getNamespace()
-    {
-        return $this->namespace;
-    }
-
     /**
      * @return array|null
      */

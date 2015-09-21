@@ -2,6 +2,16 @@
 
 You can send custom metrics to AWS CloudWatch like disk/memory usage
 
+## Features
+* Send custom metrics to AWS CloudWatch
+* Add new metrics what you need by metric plugins
+* Configure different cron time for each metric plugin
+
+## Requirements
+* PHP 5.5+
+* aws/aws-sdk-php
+* mtdowling/cron-expression 
+
 ## Usage
 
 ### Basic usage
@@ -16,7 +26,10 @@ try {
 // Create the Sender
 $cwSender = new CWSender("AWS_KEY", "AWS_SECRET", "AWS_REGION", new CommandRunner());
 $cwSender->setNamespace('Custom/System');
-$cwSender->addPlugin(['DiskUsage', 'MemoryUsage']);
+$cwSender->addPlugin([
+    new DiskUsage(new CommandRunner()),
+    new MemoryUsage(new CommandRunner())
+]);
 $cwSender->run();
 } catch (\Exception $e) {
     //Error handling
@@ -36,6 +49,33 @@ For AWS EC2 instances, some meta-data can be obtained from system like instance-
 ```
 While creating Sender object, if you dont give instance-id param, class tries to find instance-id using above cmd.
 
+### Cron for Metric Plugins
+Each metric plugin can be configured to run at specified time. Time can be defined at crontab format. For more info: https://github.com/mtdowling/cron-expression 
+``` php
+<?php
+
+use AWSCustomMetric\Sender as CWSender;
+use AWSCustomMetric\CommandRunner;
+
+try {
+//metric will be sent at every sender->run calls
+$diskPlugin = new DiskUsage(new CommandRunner(), CronExpression::factory('* * * * *'));
+
+//metric will be sent at every hour
+$memoryPlugin = new MemoryUsage(new CommandRunner(), CronExpression::factory('0 * * * *'));
+
+// Create the Sender
+$cwSender = new CWSender("AWS_KEY", "AWS_SECRET", "AWS_REGION", new CommandRunner());
+$cwSender->setNamespace('Custom/System');
+$cwSender->addPlugin([$diskPlugin, $memoryPlugin]);
+$cwSender->run();
+} catch (\Exception $e) {
+    //Error handling
+}
+
+// ...
+```
+
 ## Installation
 You can use Composer to install :
 
@@ -44,7 +84,7 @@ composer require fustundag/awscw-custom-metrics
 ```
 
 ## TODO
-* ~~NOT TESTED.~~ 86% Coverage
+* ~~NOT TESTED.~~ ~~86% Coverage~~ 100% Coverage
 * MORE PLUGINS.
 
 ## Contributing

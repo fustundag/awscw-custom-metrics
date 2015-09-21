@@ -4,7 +4,10 @@ namespace AWSCustomMetric;
 
 use Aws\CloudWatch\CloudWatchClient;
 use AWSCustomMetric\Logger\DefaultLogger;
+use AWSCustomMetric\Plugin\DiskUsage;
+use AWSCustomMetric\Plugin\MemoryUsage;
 use Codeception\Util\Stub;
+use Cron\CronExpression;
 
 class SenderTest extends \Codeception\TestCase\Test
 {
@@ -163,34 +166,45 @@ class SenderTest extends \Codeception\TestCase\Test
 
     public function testGetPlugins()
     {
+        $plugin1  = new DiskUsage(new CommandRunner());
+        $plugin2  = new MemoryUsage(new CommandRunner());
+        $expected = [
+          spl_object_hash($plugin1) => $plugin1,
+          spl_object_hash($plugin2) => $plugin2
+        ];
         $testObj = new Sender('fakekey', 'fakesecret', 'fakeregion', new CommandRunner(), 'testInstance', 'testns');
-        $testObj->addPlugin(['plugin1', 'plugin2', 'plugin3']);
-        $this->assertEquals(['plugin1', 'plugin2', 'plugin3'], $testObj->getPlugins(), 'getPlugins failed!');
+        $testObj->addPlugin([$plugin1, $plugin2]);
+        $this->assertEquals($expected, $testObj->getPlugins(), 'getPlugins failed!');
     }
 
     public function testAddPlugin()
     {
+        $plugin1 = new DiskUsage(new CommandRunner());
+        $plugin2 = new MemoryUsage(new CommandRunner());
+
         $testObj = new Sender('fakekey', 'fakesecret', 'fakeregion', new CommandRunner(), 'testInstance', 'testns');
-        $testObj->addPlugin('plugin1');
-        $this->assertContains('plugin1', $testObj->getPlugins(), 'addPlugin failed!');
+        $testObj->addPlugin($plugin1);
+        $this->assertContains($plugin1, $testObj->getPlugins(), 'addPlugin failed!');
         $this->assertCount(1, $testObj->getPlugins(), 'addPlugin failed!');
 
-        $testObj->addPlugin(['plugin2', 'plugin3', 'plugin1']);
-        $this->assertContains('plugin2', $testObj->getPlugins(), 'addPlugin failed!');
-        $this->assertContains('plugin3', $testObj->getPlugins(), 'addPlugin failed!');
-        $this->assertCount(3, $testObj->getPlugins(), 'addPlugin failed!');
+        $testObj->addPlugin([$plugin2, $plugin1]);
+        $this->assertContains($plugin2, $testObj->getPlugins(), 'addPlugin failed!');
+        $this->assertContains($plugin1, $testObj->getPlugins(), 'addPlugin failed!');
+        $this->assertCount(2, $testObj->getPlugins(), 'addPlugin failed!');
     }
 
     public function testRemovePlugin()
     {
-        $testObj = new Sender('fakekey', 'fakesecret', 'fakeregion', new CommandRunner(), 'testInstance', 'testns');
-        $testObj->addPlugin(['plugin1', 'plugin2', 'plugin3']);
+        $plugin1 = new DiskUsage(new CommandRunner());
+        $plugin2 = new MemoryUsage(new CommandRunner());
 
-        $testObj->removePlugin('plugin2');
-        $this->assertContains('plugin1', $testObj->getPlugins(), 'removePlugin failed!');
-        $this->assertContains('plugin3', $testObj->getPlugins(), 'removePlugin failed!');
-        $this->assertNotContains('plugin2', $testObj->getPlugins(), 'removePlugin failed!');
-        $this->assertCount(2, $testObj->getPlugins(), 'removePlugin failed!');
+        $testObj = new Sender('fakekey', 'fakesecret', 'fakeregion', new CommandRunner(), 'testInstance', 'testns');
+        $testObj->addPlugin([$plugin1, $plugin2]);
+
+        $testObj->removePlugin($plugin1);
+        $this->assertContains($plugin2, $testObj->getPlugins(), 'removePlugin failed!');
+        $this->assertNotContains($plugin1, $testObj->getPlugins(), 'removePlugin failed!');
+        $this->assertCount(1, $testObj->getPlugins(), 'removePlugin failed!');
     }
 
     public function testGetInstanceId()
@@ -219,5 +233,56 @@ class SenderTest extends \Codeception\TestCase\Test
         $testObj   = new Sender('fakekey', 'fakesecret', 'fakeregion', new CommandRunner(), 'testInstance', 'testns');
         $testObj->setCmdRunner($cmdRunner);
         $this->assertEquals($cmdRunner, $testObj->getCmdRunner(), 'setCmdRunner failed!');
+    }
+
+    public function testRun()
+    {
+        $fakeCmdRunner = Stub::make('\AWSCustomMetric\CommandRunner', [
+            'getReturnValue' => '56'
+        ]);
+        $plugin1 = new DiskUsage($fakeCmdRunner);
+        $plugin2 = new MemoryUsage($fakeCmdRunner);
+
+        $testObj = new Sender('fakekey', 'fakesecret', 'fakeregion', $fakeCmdRunner, 'testInstance', 'testns');
+        $testObj->addPlugin([$plugin1, $plugin2]);
+        $testObj->run();
+
+        $actualStr = file_get_contents(
+            rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'cloud_watch_client.txt'
+        );
+        $exceptedStr  = '';
+        $exceptedStr .= json_encode(
+            $this->tester->getMetricDataArray($plugin1->getMetrics(), 'testInstance', 'testns')
+        ) . "\n";
+        $exceptedStr .= json_encode(
+            $this->tester->getMetricDataArray($plugin2->getMetrics(), 'testInstance', 'testns')
+        ) . "\n";
+
+        $this->assertEquals($exceptedStr, $actualStr, 'Sender::run default test failed!');
+
+
+        $plugin3 = new DiskUsage(
+            $fakeCmdRunner,
+            'Test/System',
+            CronExpression::factory('* * * * *')
+        );
+        $plugin4 = new MemoryUsage(
+            $fakeCmdRunner,
+            'Test/System',
+            CronExpression::factory('*/'. (date('i')+1).' * * * *')
+        );
+        $testObj2 = new Sender('fakekey', 'fakesecret', 'fakeregion', $fakeCmdRunner, 'testInstance', 'testns');
+        $testObj2->addPlugin([$plugin3, $plugin4]);
+        $testObj2->run();
+
+        $actualStr = file_get_contents(
+            rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'cloud_watch_client.txt'
+        );
+        $exceptedStr  = '';
+        $exceptedStr .= json_encode(
+            $this->tester->getMetricDataArray($plugin3->getMetrics(), 'testInstance', 'Test/System')
+        ) . "\n";
+
+        $this->assertEquals($exceptedStr, $actualStr, 'Sender::run cron test failed!');
     }
 }
