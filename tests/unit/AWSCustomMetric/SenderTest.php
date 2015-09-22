@@ -28,7 +28,9 @@ class SenderTest extends \Codeception\TestCase\Test
     {
         /* @var CommandRunner $fakeCmdRunner */
         $fakeCmdRunner = Stub::make('\AWSCustomMetric\CommandRunner', [
-            'execute' => true,
+            'execute' => function () {
+
+            },
             'getReturnValue' => 'AutoInstance1'
         ]);
 
@@ -237,13 +239,37 @@ class SenderTest extends \Codeception\TestCase\Test
 
     public function testRun()
     {
-        $fakeCmdRunner = Stub::make('\AWSCustomMetric\CommandRunner', [
+        /* @var CommandRunner $fakeCmdRunner1 */
+        $fakeCmdRunner1 = Stub::make('\AWSCustomMetric\CommandRunner', [
+            'execute' => function () {
+
+            },
             'getReturnValue' => '56'
         ]);
-        $plugin1 = new DiskUsage($fakeCmdRunner);
-        $plugin2 = new MemoryUsage($fakeCmdRunner);
 
-        $testObj = new Sender('fakekey', 'fakesecret', 'fakeregion', $fakeCmdRunner, 'testInstance', 'testns');
+        /* @var CommandRunner $fakeCmdRunner2 */
+        $fakeCmdRunner2 = Stub::make('\AWSCustomMetric\CommandRunner', [
+            'execute' => function () {
+
+            },
+            'getReturnCode' => 0,
+            'getOutput' => [
+                'MemTotal:        10000 kB',
+                'MemFree:          2000 kB',
+                'MemAvailable:     419980 kB',
+                'Buffers:          1000 kB',
+                'Cached:           1000 kB',
+                'SwapCached:            0 kB',
+                'Active:           526652 kB',
+                'Inactive:         164928 kB',
+                'SwapTotal:        10000 kB',
+                'SwapFree:          9000 kB',
+            ]
+        ]);
+        $plugin1 = new DiskUsage($fakeCmdRunner1);
+        $plugin2 = new MemoryUsage($fakeCmdRunner2);
+
+        $testObj = new Sender('fakekey', 'fakesecret', 'fakeregion', $fakeCmdRunner1, 'testInstance', 'testns');
         $testObj->addPlugin([$plugin1, $plugin2]);
         $testObj->run();
 
@@ -262,16 +288,16 @@ class SenderTest extends \Codeception\TestCase\Test
 
 
         $plugin3 = new DiskUsage(
-            $fakeCmdRunner,
+            $fakeCmdRunner1,
             'Test/System',
             CronExpression::factory('* * * * *')
         );
         $plugin4 = new MemoryUsage(
-            $fakeCmdRunner,
+            $fakeCmdRunner2,
             'Test/System',
             CronExpression::factory('*/'. (date('i')+1).' * * * *')
         );
-        $testObj2 = new Sender('fakekey', 'fakesecret', 'fakeregion', $fakeCmdRunner, 'testInstance', 'testns');
+        $testObj2 = new Sender('fakekey', 'fakesecret', 'fakeregion', $fakeCmdRunner1, 'testInstance', 'testns');
         $testObj2->addPlugin([$plugin3, $plugin4]);
         $testObj2->run();
 

@@ -76,6 +76,9 @@ class MemoryUsageTest extends \Codeception\TestCase\Test
         $expectedSwapMetric->setNamespace('CustomMetric/Test');
 
         $fakeCmdRunner = Stub::make('\AWSCustomMetric\CommandRunner', [
+            'execute' => function () {
+
+            },
             'getReturnCode' => 0,
             'getOutput' => [
                 'MemTotal:        10000 kB',
@@ -109,6 +112,9 @@ class MemoryUsageTest extends \Codeception\TestCase\Test
             "[".date('Y-m-d H:i:s')."][ERROR] /proc/meminfo parse failed!, RETVAL: 255, OUT: Error occured\n"
         );
         $fakeCmdRunner = Stub::make('\AWSCustomMetric\CommandRunner', [
+            'execute' => function () {
+
+            },
             'getReturnCode' => 255,
             'getOutput' => [
                 'Error occured',
@@ -127,6 +133,10 @@ class MemoryUsageTest extends \Codeception\TestCase\Test
         $expectedMetric->setValue('56');
         $expectedMetric->setNamespace('CustomMetric/Test');
         $fakeCmdRunner = Stub::make('\AWSCustomMetric\CommandRunner', [
+            'execute' => function () {
+
+            },
+            'getReturnCode'  => 0,
             'getReturnValue' => '56'
         ]);
 

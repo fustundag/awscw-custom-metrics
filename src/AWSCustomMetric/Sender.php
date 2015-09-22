@@ -224,27 +224,25 @@ class Sender
         $this->cmdRunner = $cmdRunner;
     }
 
-    private function sendMetric($metrics)
+    private function sendMetric($metrics, $namespace)
     {
-        if (count($metrics)>0) {
-            $metricData = [];
-            /* @var Metric $metric */
-            foreach ($metrics as $metric) {
-                $metricData[] = [
-                    'Dimensions' => [
-                        ['Name' => 'InstanceId', 'Value' => $this->instanceId]
-                    ],
-                    'MetricName' => $metric->getName(),
-                    'Unit' => $metric->getUnit(),
-                    'Value' => $metric->getValue(),
-                    'Timestamp' => date('Y-m-d') . 'T' . date('H:i:s') . 'Z'
-                ];
-            }
-            $this->cloudWatchClient->putMetricData([
-                'Namespace'  => $metric->getNamespace()?:$this->getNamespace(),
-                'MetricData' => $metricData
-            ]);
+        $metricData = [];
+        /* @var Metric $metric */
+        foreach ($metrics as $metric) {
+            $metricData[] = [
+                'Dimensions' => [
+                    ['Name' => 'InstanceId', 'Value' => $this->instanceId]
+                ],
+                'MetricName' => $metric->getName(),
+                'Unit' => $metric->getUnit(),
+                'Value' => $metric->getValue(),
+                'Timestamp' => date('Y-m-d') . 'T' . date('H:i:s') . 'Z'
+            ];
         }
+        $this->cloudWatchClient->putMetricData([
+            'Namespace'  => $namespace?:$this->getNamespace(),
+            'MetricData' => $metricData
+        ]);
     }
 
     public function run()
@@ -262,7 +260,7 @@ class Sender
         foreach ($pluginsWillBeRunned as $plugin) {
             $metrics = $plugin->getMetrics();
             if (is_array($metrics) && count($metrics)>0) {
-                $this->sendMetric($metrics);
+                $this->sendMetric($metrics, $plugin->getNamespace());
             }
         }
     }

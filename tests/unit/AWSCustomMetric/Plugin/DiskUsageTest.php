@@ -69,6 +69,10 @@ class DiskUsageTest extends \Codeception\TestCase\Test
         $expectedMetric->setNamespace('CustomMetric/Test');
 
         $fakeCmdRunner = Stub::make('\AWSCustomMetric\CommandRunner', [
+            'execute' => function () {
+
+            },
+            'getReturnCode'  => 0,
             'getReturnValue' => Stub::consecutive('Darwin', '56')
         ]);
         $diskUsage   = new DiskUsage($fakeCmdRunner, 'CustomMetric/Test');
@@ -77,6 +81,10 @@ class DiskUsageTest extends \Codeception\TestCase\Test
         $this->assertEquals($expectedMetric, $returnArray[0], 'DiskUsage return metric object failed!');
 
         $fakeCmdRunner = Stub::make('\AWSCustomMetric\CommandRunner', [
+            'execute' => function () {
+
+            },
+            'getReturnCode'  => 0,
             'getReturnValue' => Stub::consecutive('Linux', '0')
         ]);
         $diskUsage   = new DiskUsage($fakeCmdRunner, 'CustomMetric/Test');
@@ -92,6 +100,10 @@ class DiskUsageTest extends \Codeception\TestCase\Test
         $expectedMetric->setValue('56');
         $expectedMetric->setNamespace('CustomMetric/Test');
         $fakeCmdRunner = Stub::make('\AWSCustomMetric\CommandRunner', [
+            'execute' => function () {
+
+            },
+            'getReturnCode'  => 0,
             'getReturnValue' => '56'
         ]);
 
