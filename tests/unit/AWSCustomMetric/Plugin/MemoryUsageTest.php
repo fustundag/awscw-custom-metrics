@@ -63,11 +63,18 @@ class MemoryUsageTest extends \Codeception\TestCase\Test
 
     public function testGetMetrics()
     {
-        $expectedMetric = new Metric();
-        $expectedMetric->setName('MemoryUsage');
-        $expectedMetric->setUnit('Percent');
-        $expectedMetric->setValue('60');
-        $expectedMetric->setNamespace('CustomMetric/Test');
+        $expectedMemMetric = new Metric();
+        $expectedMemMetric->setName('MemoryUsage');
+        $expectedMemMetric->setUnit('Percent');
+        $expectedMemMetric->setValue('60');
+        $expectedMemMetric->setNamespace('CustomMetric/Test');
+
+        $expectedSwapMetric = new Metric();
+        $expectedSwapMetric->setName('SwapUsage');
+        $expectedSwapMetric->setUnit('Percent');
+        $expectedSwapMetric->setValue('10');
+        $expectedSwapMetric->setNamespace('CustomMetric/Test');
+
         $fakeCmdRunner = Stub::make('\AWSCustomMetric\CommandRunner', [
             'getReturnCode' => 0,
             'getOutput' => [
@@ -79,30 +86,24 @@ class MemoryUsageTest extends \Codeception\TestCase\Test
                 'SwapCached:            0 kB',
                 'Active:           526652 kB',
                 'Inactive:         164928 kB',
+                'SwapTotal:        10000 kB',
+                'SwapFree:          9000 kB',
             ]
         ]);
 
         $memoryUsage = new MemoryUsage($fakeCmdRunner, 'CustomMetric/Test');
         $returnArray = $memoryUsage->getMetrics();
-        $this->assertCount(1, $returnArray, 'Memory usage return array failed');
-        $this->assertEquals($expectedMetric, $returnArray[0], 'MemoryUsage return metric object failed!');
-
-        $fakeCmdRunner = Stub::make('\AWSCustomMetric\CommandRunner', [
-            'getReturnCode' => 0,
-            'getOutput' => [
-                'MemTotal:        10000 kB',
-                'MemFree:          8000 kB',
-                'MemAvailable:     419980 kB',
-                'Buffers:          1000 kB',
-                'Cached:           1000 kB',
-                'SwapCached:            0 kB',
-                'Active:           526652 kB',
-                'Inactive:         164928 kB',
-            ]
-        ]);
-        $memoryUsage   = new MemoryUsage($fakeCmdRunner, 'CustomMetric/Test');
-        $returnArray = $memoryUsage->getMetrics();
-        $this->assertNull($returnArray, 'MemoryUsage return null failed!');
+        $this->assertCount(2, $returnArray, 'Memory usage return array failed');
+        $this->assertEquals(
+            $expectedMemMetric,
+            $returnArray[0],
+            'MemoryUsage return memory usage metric object failed!'
+        );
+        $this->assertEquals(
+            $expectedSwapMetric,
+            $returnArray[1],
+            'MemoryUsage return swap usage metric object failed!'
+        );
 
         $this->expectOutputString(
             "[".date('Y-m-d H:i:s')."][ERROR] /proc/meminfo parse failed!, RETVAL: 255, OUT: Error occured\n"
