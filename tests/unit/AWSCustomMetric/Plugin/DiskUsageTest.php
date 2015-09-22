@@ -67,17 +67,17 @@ class DiskUsageTest extends \Codeception\TestCase\Test
         $expectedMetric->setUnit('Percent');
         $expectedMetric->setValue('56');
         $expectedMetric->setNamespace('CustomMetric/Test');
-        $fakeCmdRunner = Stub::make('\AWSCustomMetric\CommandRunner', [
-            'getReturnValue' => '56'
-        ]);
 
+        $fakeCmdRunner = Stub::make('\AWSCustomMetric\CommandRunner', [
+            'getReturnValue' => Stub::consecutive('Darwin', '56')
+        ]);
         $diskUsage   = new DiskUsage($fakeCmdRunner, 'CustomMetric/Test');
         $returnArray = $diskUsage->getMetrics();
         $this->assertCount(1, $returnArray, 'Disk usage return array failed');
         $this->assertEquals($expectedMetric, $returnArray[0], 'DiskUsage return metric object failed!');
 
         $fakeCmdRunner = Stub::make('\AWSCustomMetric\CommandRunner', [
-            'getReturnValue' => '0'
+            'getReturnValue' => Stub::consecutive('Linux', '0')
         ]);
         $diskUsage   = new DiskUsage($fakeCmdRunner, 'CustomMetric/Test');
         $returnArray = $diskUsage->getMetrics();
@@ -102,5 +102,21 @@ class DiskUsageTest extends \Codeception\TestCase\Test
             'DiskUsage::createNewMetric test failed!'
         );
 
+    }
+
+    public function testSetMountPoint()
+    {
+        $diskUsage = new DiskUsage(new CommandRunner());
+        $diskUsage->setMountPoint('/home');
+        $this->assertEquals('/home', $diskUsage->getMountPoint(), 'DiskUsage::setMountPoint test failed!');
+    }
+
+    public function testGetMountPoint()
+    {
+        $diskUsage = new DiskUsage(new CommandRunner());
+        $this->assertEquals('/', $diskUsage->getMountPoint(), 'DiskUsage::getMountPoint default value test failed!');
+
+        $diskUsage->setMountPoint('/home');
+        $this->assertEquals('/home', $diskUsage->getMountPoint(), 'DiskUsage::getMountPoint test failed!');
     }
 }
