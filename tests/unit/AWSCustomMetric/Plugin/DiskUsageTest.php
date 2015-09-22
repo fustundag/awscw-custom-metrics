@@ -83,4 +83,24 @@ class DiskUsageTest extends \Codeception\TestCase\Test
         $returnArray = $diskUsage->getMetrics();
         $this->assertNull($returnArray, 'DiskUsage return null failed!');
     }
+
+    public function testCreateNewMetric()
+    {
+        $expectedMetric = new Metric();
+        $expectedMetric->setName('DiskUsage');
+        $expectedMetric->setUnit('Percent');
+        $expectedMetric->setValue('56');
+        $expectedMetric->setNamespace('CustomMetric/Test');
+        $fakeCmdRunner = Stub::make('\AWSCustomMetric\CommandRunner', [
+            'getReturnValue' => '56'
+        ]);
+
+        $diskUsage = new DiskUsage($fakeCmdRunner, 'CustomMetric/Test');
+        $this->assertEquals(
+            $expectedMetric,
+            $diskUsage->createNewMetric('DiskUsage', 'Percent', '56'),
+            'DiskUsage::createNewMetric test failed!'
+        );
+
+    }
 }

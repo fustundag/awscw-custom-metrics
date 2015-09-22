@@ -7,7 +7,7 @@ use AWSCustomMetric\Metric;
 class MemoryUsage extends BaseMetricPlugin implements MetricPluginInterface
 {
     /**
-     * @return array|bool|null
+     * @return Metric[]|bool|null
      */
     public function getMetrics()
     {
@@ -15,7 +15,7 @@ class MemoryUsage extends BaseMetricPlugin implements MetricPluginInterface
         $retVal = $this->cmdRunner->getReturnCode();
         $memInfoLines = $this->cmdRunner->getOutput();
         $memInfo = [];
-        if ($retVal==0) {
+        if ($retVal===0 && is_array($memInfoLines) && count($memInfoLines)>0) {
             foreach ($memInfoLines as $memInfoLine) {
                 list($key, $val) = explode(':', $memInfoLine);
                 $key = trim($key);
@@ -27,12 +27,7 @@ class MemoryUsage extends BaseMetricPlugin implements MetricPluginInterface
             $memInfo['MemUtil']  = ceil((100*$memInfo['MemUsed']/$memInfo['MemTotal']));
 
             if ($memInfo['MemUtil']>0) {
-                $metric = new Metric();
-                $metric->setNamespace($this->namespace);
-                $metric->setName('MemoryUsage');
-                $metric->setUnit('Percent');
-                $metric->setValue($memInfo['MemUtil']);
-                return [$metric];
+                return [ $this->createNewMetric('MemoryUsage', 'Percent', $memInfo['MemUtil']) ];
             } else {
                 return null;
             }

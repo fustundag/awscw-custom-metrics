@@ -10,6 +10,7 @@ namespace AWSCustomMetric\Plugin;
 
 use AWSCustomMetric\Logger\LoggerInterface;
 use AWSCustomMetric\CommandRunner;
+use AWSCustomMetric\Metric;
 use Cron\CronExpression;
 
 abstract class BaseMetricPlugin implements MetricPluginInterface
@@ -75,5 +76,21 @@ abstract class BaseMetricPlugin implements MetricPluginInterface
     public function setCronExpression(CronExpression $cronExpression)
     {
         $this->cronExpression = $cronExpression;
+    }
+
+    /**
+     * @param $name
+     * @param $unit
+     * @param $value
+     * @return Metric
+     */
+    public function createNewMetric($name, $unit, $value)
+    {
+        $metric = new Metric();
+        $metric->setNamespace($this->namespace);
+        $metric->setName($name);
+        $metric->setUnit($unit);
+        $metric->setValue($value);
+        return $metric;
     }
 }

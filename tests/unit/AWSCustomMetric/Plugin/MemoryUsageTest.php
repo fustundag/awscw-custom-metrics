@@ -117,4 +117,24 @@ class MemoryUsageTest extends \Codeception\TestCase\Test
         $returnArray = $memoryUsage->getMetrics();
         $this->assertFalse($returnArray, 'MemoryUsage return false failed!');
     }
+
+    public function testCreateNewMetric()
+    {
+        $expectedMetric = new Metric();
+        $expectedMetric->setName('MemoryUsage');
+        $expectedMetric->setUnit('Percent');
+        $expectedMetric->setValue('56');
+        $expectedMetric->setNamespace('CustomMetric/Test');
+        $fakeCmdRunner = Stub::make('\AWSCustomMetric\CommandRunner', [
+            'getReturnValue' => '56'
+        ]);
+
+        $memUsage = new MemoryUsage($fakeCmdRunner, 'CustomMetric/Test');
+        $this->assertEquals(
+            $expectedMetric,
+            $memUsage->createNewMetric('MemoryUsage', 'Percent', '56'),
+            'MemoryUsage::createNewMetric test failed!'
+        );
+
+    }
 }

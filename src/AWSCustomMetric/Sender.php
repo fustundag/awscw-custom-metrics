@@ -226,23 +226,25 @@ class Sender
 
     private function sendMetric($metrics)
     {
-        $metricData = [];
-        /* @var Metric $metric */
-        foreach ($metrics as $metric) {
-            $metricData[] = [
-                'Dimensions' => [
-                    ['Name' => 'InstanceId', 'Value' => $this->instanceId]
-                ],
-                'MetricName' => $metric->getName(),
-                'Unit' => $metric->getUnit(),
-                'Value' => $metric->getValue(),
-                'Timestamp' => date('Y-m-d') . 'T' . date('H:i:s') . 'Z'
-            ];
+        if (count($metrics)>0) {
+            $metricData = [];
+            /* @var Metric $metric */
+            foreach ($metrics as $metric) {
+                $metricData[] = [
+                    'Dimensions' => [
+                        ['Name' => 'InstanceId', 'Value' => $this->instanceId]
+                    ],
+                    'MetricName' => $metric->getName(),
+                    'Unit' => $metric->getUnit(),
+                    'Value' => $metric->getValue(),
+                    'Timestamp' => date('Y-m-d') . 'T' . date('H:i:s') . 'Z'
+                ];
+            }
+            $this->cloudWatchClient->putMetricData([
+                'Namespace'  => $metric->getNamespace()?:$this->getNamespace(),
+                'MetricData' => $metricData
+            ]);
         }
-        $this->cloudWatchClient->putMetricData([
-            'Namespace'  => $metric->getNamespace()?:$this->getNamespace(),
-            'MetricData' => $metricData
-        ]);
     }
 
     public function run()
