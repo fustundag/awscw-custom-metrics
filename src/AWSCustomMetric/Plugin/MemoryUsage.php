@@ -6,6 +6,24 @@ use AWSCustomMetric\Metric;
 
 class MemoryUsage extends BaseMetricPlugin implements MetricPluginInterface
 {
+    private $swapCheckOn = true;
+
+    /**
+     * @return boolean
+     */
+    public function isSwapCheckOn()
+    {
+        return $this->swapCheckOn;
+    }
+
+    /**
+     * @param bool $swapCheckOn
+     */
+    public function setSwapCheckOn($swapCheckOn)
+    {
+        $this->swapCheckOn = $swapCheckOn?true:false;
+    }
+
     /**
      * @return Metric[]|bool
      */
@@ -24,15 +42,19 @@ class MemoryUsage extends BaseMetricPlugin implements MetricPluginInterface
             }
             $memInfo['MemAvail'] = $memInfo['MemFree'] + $memInfo['Buffers'] + $memInfo['Cached'];
             $memInfo['MemUsed']  = $memInfo['MemTotal'] - $memInfo['MemAvail'];
-            $memInfo['MemUtil']  = ceil((100*$memInfo['MemUsed']/$memInfo['MemTotal']));
+            $memInfo['MemUtil']  = $memInfo['MemTotal']>0?ceil((100*$memInfo['MemUsed']/$memInfo['MemTotal'])):100;
 
-            $memInfo['SwapUsed'] = $memInfo['SwapTotal'] - $memInfo['SwapFree'];
-            $memInfo['SwapUtil'] = ceil((100*$memInfo['SwapUsed']/$memInfo['SwapTotal']));
+            $metrics = [ $this->createNewMetric('MemoryUsage', 'Percent', $memInfo['MemUtil']) ];
 
-            return [
-                $this->createNewMetric('MemoryUsage', 'Percent', $memInfo['MemUtil']),
-                $this->createNewMetric('SwapUsage', 'Percent', $memInfo['SwapUtil']),
-            ];
+            if ($this->isSwapCheckOn()) {
+                $memInfo['SwapUsed'] = $memInfo['SwapTotal'] - $memInfo['SwapFree'];
+                $memInfo['SwapUtil'] = $memInfo['SwapTotal']>0
+                    ?ceil((100*$memInfo['SwapUsed']/$memInfo['SwapTotal']))
+                    :100;
+                $metrics[] = $this->createNewMetric('SwapUsage', 'Percent', $memInfo['SwapUtil']);
+            }
+
+            return $metrics;
         } else {
             if ($this->logger) {
                 $this->logger->error(

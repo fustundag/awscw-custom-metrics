@@ -75,6 +75,7 @@ class MemoryUsageTest extends \Codeception\TestCase\Test
         $expectedSwapMetric->setValue('10');
         $expectedSwapMetric->setNamespace('CustomMetric/Test');
 
+        /* @var CommandRunner $fakeCmdRunner */
         $fakeCmdRunner = Stub::make('\AWSCustomMetric\CommandRunner', [
             'execute' => function () {
 
@@ -108,6 +109,16 @@ class MemoryUsageTest extends \Codeception\TestCase\Test
             'MemoryUsage return swap usage metric object failed!'
         );
 
+        $memoryUsage->setSwapCheckOn(false);
+        $returnArray = $memoryUsage->getMetrics();
+        $this->assertCount(1, $returnArray, 'Memory usage swap off test failed!');
+        $this->assertEquals(
+            $expectedMemMetric,
+            $returnArray[0],
+            'MemoryUsage return memory usage metric object failed!'
+        );
+
+
         $this->expectOutputString(
             "[".date('Y-m-d H:i:s')."][ERROR] /proc/meminfo parse failed!, RETVAL: 255, OUT: Error occured\n"
         );
@@ -125,6 +136,55 @@ class MemoryUsageTest extends \Codeception\TestCase\Test
         $this->assertFalse($returnArray, 'MemoryUsage return false failed!');
     }
 
+    public function testGetMetricsDivisionByZero()
+    {
+        $expectedMemMetric = new Metric();
+        $expectedMemMetric->setName('MemoryUsage');
+        $expectedMemMetric->setUnit('Percent');
+        $expectedMemMetric->setValue('100');
+        $expectedMemMetric->setNamespace('CustomMetric/Test');
+
+        $expectedSwapMetric = new Metric();
+        $expectedSwapMetric->setName('SwapUsage');
+        $expectedSwapMetric->setUnit('Percent');
+        $expectedSwapMetric->setValue('100');
+        $expectedSwapMetric->setNamespace('CustomMetric/Test');
+
+        /* @var CommandRunner $fakeCmdRunner */
+        $fakeCmdRunner = Stub::make('\AWSCustomMetric\CommandRunner', [
+            'execute' => function () {
+
+            },
+            'getReturnCode' => 0,
+            'getOutput' => [
+                'MemTotal:        0 kB',
+                'MemFree:          2000 kB',
+                'MemAvailable:     419980 kB',
+                'Buffers:          1000 kB',
+                'Cached:           1000 kB',
+                'SwapCached:            0 kB',
+                'Active:           526652 kB',
+                'Inactive:         164928 kB',
+                'SwapTotal:        0 kB',
+                'SwapFree:          9000 kB',
+            ]
+        ]);
+
+        $memoryUsage = new MemoryUsage($fakeCmdRunner, 'CustomMetric/Test');
+        $returnArray = $memoryUsage->getMetrics();
+        $this->assertCount(2, $returnArray, 'getMetrics division by zero test failed!');
+        $this->assertEquals(
+            $expectedMemMetric,
+            $returnArray[0],
+            'getMetrics division by zero test: returned memory metric object failed!'
+        );
+        $this->assertEquals(
+            $expectedSwapMetric,
+            $returnArray[1],
+            'getMetrics division by zero test: returned swap metric object failed!'
+        );
+    }
+
     public function testCreateNewMetric()
     {
         $expectedMetric = new Metric();
@@ -132,6 +192,8 @@ class MemoryUsageTest extends \Codeception\TestCase\Test
         $expectedMetric->setUnit('Percent');
         $expectedMetric->setValue('56');
         $expectedMetric->setNamespace('CustomMetric/Test');
+
+        /* @var CommandRunner $fakeCmdRunner */
         $fakeCmdRunner = Stub::make('\AWSCustomMetric\CommandRunner', [
             'execute' => function () {
 
@@ -146,6 +208,22 @@ class MemoryUsageTest extends \Codeception\TestCase\Test
             $memUsage->createNewMetric('MemoryUsage', 'Percent', '56'),
             'MemoryUsage::createNewMetric test failed!'
         );
+    }
 
+    public function testSetSwapCheckOn()
+    {
+        $memUsage = new MemoryUsage(new CommandRunner());
+        $memUsage->setSwapCheckOn(false);
+        $this->assertFalse($memUsage->isSwapCheckOn(), 'MemoryUsage::setSwapCheckOn test failed!');
+    }
+
+    public function testIsSwapCheckOn()
+    {
+        $memUsage = new MemoryUsage(new CommandRunner());
+        $this->assertTrue($memUsage->isSwapCheckOn(), 'MemoryUsage::isSwapCheckOn default true value test failed!');
+
+        $memUsage = new MemoryUsage(new CommandRunner());
+        $memUsage->setSwapCheckOn(false);
+        $this->assertFalse($memUsage->isSwapCheckOn(), 'MemoryUsage::isSwapCheckOn test failed!');
     }
 }
