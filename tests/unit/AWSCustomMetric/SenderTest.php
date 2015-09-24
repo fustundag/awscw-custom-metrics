@@ -7,7 +7,6 @@ use AWSCustomMetric\Logger\DefaultLogger;
 use AWSCustomMetric\Plugin\DiskUsage;
 use AWSCustomMetric\Plugin\MemoryUsage;
 use Codeception\Util\Stub;
-use Cron\CronExpression;
 
 class SenderTest extends \Codeception\TestCase\Test
 {
@@ -105,7 +104,11 @@ class SenderTest extends \Codeception\TestCase\Test
         $testObj = new Sender('fakekey', 'fakesecret', 'fakeregion', new CommandRunner(), 'testInstance');
         $testObj->setAwsSecret('fakesecret2');
         $this->assertEquals('fakesecret2', $testObj->getAwsSecret(), 'setAwsSecret failed!');
-        $this->assertEquals($expectedCWClient, $testObj->getCloudWatchClient(), 'setAwsSecret - CloudWatchClient failed!');
+        $this->assertEquals(
+            $expectedCWClient,
+            $testObj->getCloudWatchClient(),
+            'setAwsSecret - CloudWatchClient failed!'
+        );
     }
 
     public function testGetAwsSecret()
@@ -168,8 +171,8 @@ class SenderTest extends \Codeception\TestCase\Test
 
     public function testGetPlugins()
     {
-        $plugin1  = new DiskUsage(new CommandRunner());
-        $plugin2  = new MemoryUsage(new CommandRunner());
+        $plugin1  = new DiskUsage(new DI());
+        $plugin2  = new MemoryUsage(new DI());
         $expected = [
           spl_object_hash($plugin1) => $plugin1,
           spl_object_hash($plugin2) => $plugin2
@@ -181,8 +184,8 @@ class SenderTest extends \Codeception\TestCase\Test
 
     public function testAddPlugin()
     {
-        $plugin1 = new DiskUsage(new CommandRunner());
-        $plugin2 = new MemoryUsage(new CommandRunner());
+        $plugin1 = new DiskUsage(new DI());
+        $plugin2 = new MemoryUsage(new DI());
 
         $testObj = new Sender('fakekey', 'fakesecret', 'fakeregion', new CommandRunner(), 'testInstance', 'testns');
         $testObj->addPlugin($plugin1);
@@ -197,8 +200,8 @@ class SenderTest extends \Codeception\TestCase\Test
 
     public function testRemovePlugin()
     {
-        $plugin1 = new DiskUsage(new CommandRunner());
-        $plugin2 = new MemoryUsage(new CommandRunner());
+        $plugin1 = new DiskUsage(new DI());
+        $plugin2 = new MemoryUsage(new DI());
 
         $testObj = new Sender('fakekey', 'fakesecret', 'fakeregion', new CommandRunner(), 'testInstance', 'testns');
         $testObj->addPlugin([$plugin1, $plugin2]);
@@ -266,8 +269,14 @@ class SenderTest extends \Codeception\TestCase\Test
                 'SwapFree:          9000 kB',
             ]
         ]);
-        $plugin1 = new DiskUsage($fakeCmdRunner1);
-        $plugin2 = new MemoryUsage($fakeCmdRunner2);
+        $diObj1  = new DI();
+        $diObj1->setCommandRunner($fakeCmdRunner1);
+        $diObj2  = new DI();
+        $diObj2->setCommandRunner($fakeCmdRunner2);
+
+
+        $plugin1 = new DiskUsage($diObj1);
+        $plugin2 = new MemoryUsage($diObj2);
 
         $testObj = new Sender('fakekey', 'fakesecret', 'fakeregion', $fakeCmdRunner1, 'testInstance', 'testns');
         $testObj->addPlugin([$plugin1, $plugin2]);
@@ -286,16 +295,15 @@ class SenderTest extends \Codeception\TestCase\Test
 
         $this->assertEquals($exceptedStr, $actualStr, 'Sender::run default test failed!');
 
-
         $plugin3 = new DiskUsage(
-            $fakeCmdRunner1,
+            $diObj1,
             'Test/System',
-            CronExpression::factory('* * * * *')
+            '* * * * *'
         );
         $plugin4 = new MemoryUsage(
-            $fakeCmdRunner2,
+            $diObj2,
             'Test/System',
-            CronExpression::factory('*/'. (date('i')+1).' * * * *')
+            '*/'. (date('i')+1).' * * * *'
         );
         $testObj2 = new Sender('fakekey', 'fakesecret', 'fakeregion', $fakeCmdRunner1, 'testInstance', 'testns');
         $testObj2->addPlugin([$plugin3, $plugin4]);

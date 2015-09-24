@@ -3,6 +3,7 @@
 namespace AWSCustomMetric\Plugin;
 
 use AWSCustomMetric\CommandRunner;
+use AWSCustomMetric\DI;
 use AWSCustomMetric\Logger\DefaultLogger;
 use AWSCustomMetric\Metric;
 use Codeception\Util\Stub;
@@ -26,43 +27,43 @@ class MemoryUsageTest extends \Codeception\TestCase\Test
 
     public function testGetNamespace()
     {
-        $memUsage = new MemoryUsage(new CommandRunner());
+        $memUsage = new MemoryUsage(new DI());
         $this->assertNull($memUsage->getNamespace(), 'MemoryUsage::getNamespace null test failed!');
 
-        $memUsage = new MemoryUsage(new CommandRunner(), '');
+        $memUsage = new MemoryUsage(new DI(), '');
         $this->assertEquals('', $memUsage->getNamespace(), 'MemoryUsage::getNamespace empty string failed!');
 
-        $memUsage = new MemoryUsage(new CommandRunner(), 'MyNamespace');
+        $memUsage = new MemoryUsage(new DI(), 'MyNamespace');
         $this->assertEquals('MyNamespace', $memUsage->getNamespace(), 'MemoryUsage::getNamespace failed!');
     }
 
     public function testSetNamespace()
     {
-        $memUsage = new MemoryUsage(new CommandRunner());
+        $memUsage = new MemoryUsage(new DI());
         $memUsage->setNamespace('TestSpace');
         $this->assertEquals('TestSpace', $memUsage->getNamespace(), 'MemoryUsage::setNamespace failed!');
     }
 
     public function testGetCronExpression()
     {
-        $memUsage = new MemoryUsage(new CommandRunner());
+        $memUsage = new MemoryUsage(new DI());
         $this->assertNull($memUsage->getCronExpression(), 'MemoryUsage::getCronExpression null test failed!');
 
-        $cronExpression = CronExpression::factory('*/5 * * * *');
-        $memUsage = new MemoryUsage(new CommandRunner(), '', $cronExpression);
-        $this->assertEquals($cronExpression, $memUsage->getCronExpression(), 'MemoryUsage::getCronExpression failed!');
+        $memUsage = new MemoryUsage(new DI(), '', '*/5 * * * *');
+        $this->assertEquals('*/5 * * * *', $memUsage->getCronExpression(), 'MemoryUsage::getCronExpression failed!');
     }
 
     public function testSetCronExpression()
     {
-        $cronExpression = CronExpression::factory('*/5 * * * *');
-        $memUsage = new MemoryUsage(new CommandRunner());
-        $memUsage->setCronExpression($cronExpression);
-        $this->assertEquals($cronExpression, $memUsage->getCronExpression(), 'MemoryUsage::setCronExpression failed!');
+        $memUsage = new MemoryUsage(new DI(), '');
+        $memUsage->setCronExpression('*/5 * * * *');
+        $this->assertEquals('*/5 * * * *', $memUsage->getCronExpression(), 'MemoryUsage::setCronExpression failed!');
     }
 
     public function testGetMetrics()
     {
+        $diObj = new DI();
+
         $expectedMemMetric = new Metric();
         $expectedMemMetric->setName('MemoryUsage');
         $expectedMemMetric->setUnit('Percent');
@@ -94,8 +95,9 @@ class MemoryUsageTest extends \Codeception\TestCase\Test
                 'SwapFree:          9000 kB',
             ]
         ]);
+        $diObj->setCommandRunner($fakeCmdRunner);
 
-        $memoryUsage = new MemoryUsage($fakeCmdRunner, 'CustomMetric/Test');
+        $memoryUsage = new MemoryUsage($diObj, 'CustomMetric/Test');
         $returnArray = $memoryUsage->getMetrics();
         $this->assertCount(2, $returnArray, 'Memory usage return array failed');
         $this->assertEquals(
@@ -131,13 +133,17 @@ class MemoryUsageTest extends \Codeception\TestCase\Test
                 'Error occured',
             ]
         ]);
-        $memoryUsage   = new MemoryUsage($fakeCmdRunner, 'CustomMetric/Test', null, new DefaultLogger());
+        $diObj->setCommandRunner($fakeCmdRunner);
+        $diObj->setLogger(new DefaultLogger());
+        $memoryUsage   = new MemoryUsage($diObj, 'CustomMetric/Test');
         $returnArray = $memoryUsage->getMetrics();
         $this->assertFalse($returnArray, 'MemoryUsage return false failed!');
     }
 
     public function testGetMetricsDivisionByZero()
     {
+        $diObj = new DI();
+
         $expectedMemMetric = new Metric();
         $expectedMemMetric->setName('MemoryUsage');
         $expectedMemMetric->setUnit('Percent');
@@ -169,8 +175,9 @@ class MemoryUsageTest extends \Codeception\TestCase\Test
                 'SwapFree:          9000 kB',
             ]
         ]);
+        $diObj->setCommandRunner($fakeCmdRunner);
 
-        $memoryUsage = new MemoryUsage($fakeCmdRunner, 'CustomMetric/Test');
+        $memoryUsage = new MemoryUsage($diObj, 'CustomMetric/Test');
         $returnArray = $memoryUsage->getMetrics();
         $this->assertCount(2, $returnArray, 'getMetrics division by zero test failed!');
         $this->assertEquals(
@@ -187,6 +194,8 @@ class MemoryUsageTest extends \Codeception\TestCase\Test
 
     public function testCreateNewMetric()
     {
+        $diObj = new DI();
+
         $expectedMetric = new Metric();
         $expectedMetric->setName('MemoryUsage');
         $expectedMetric->setUnit('Percent');
@@ -201,8 +210,9 @@ class MemoryUsageTest extends \Codeception\TestCase\Test
             'getReturnCode'  => 0,
             'getReturnValue' => '56'
         ]);
+        $diObj->setCommandRunner($fakeCmdRunner);
 
-        $memUsage = new MemoryUsage($fakeCmdRunner, 'CustomMetric/Test');
+        $memUsage = new MemoryUsage($diObj, 'CustomMetric/Test');
         $this->assertEquals(
             $expectedMetric,
             $memUsage->createNewMetric('MemoryUsage', 'Percent', '56'),
@@ -212,17 +222,17 @@ class MemoryUsageTest extends \Codeception\TestCase\Test
 
     public function testSetSwapCheckOn()
     {
-        $memUsage = new MemoryUsage(new CommandRunner());
+        $memUsage = new MemoryUsage(new DI());
         $memUsage->setSwapCheckOn(false);
         $this->assertFalse($memUsage->isSwapCheckOn(), 'MemoryUsage::setSwapCheckOn test failed!');
     }
 
     public function testIsSwapCheckOn()
     {
-        $memUsage = new MemoryUsage(new CommandRunner());
+        $memUsage = new MemoryUsage(new DI());
         $this->assertTrue($memUsage->isSwapCheckOn(), 'MemoryUsage::isSwapCheckOn default true value test failed!');
 
-        $memUsage = new MemoryUsage(new CommandRunner());
+        $memUsage = new MemoryUsage(new DI());
         $memUsage->setSwapCheckOn(false);
         $this->assertFalse($memUsage->isSwapCheckOn(), 'MemoryUsage::isSwapCheckOn test failed!');
     }

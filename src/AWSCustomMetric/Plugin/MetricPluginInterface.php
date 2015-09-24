@@ -2,24 +2,18 @@
 
 namespace AWSCustomMetric\Plugin;
 
-use AWSCustomMetric\CommandRunner;
-use AWSCustomMetric\Logger\LoggerInterface;
-use Cron\CronExpression;
+use AWSCustomMetric\DI;
 
 interface MetricPluginInterface
 {
-    public function __construct(
-        CommandRunner $cmdRunner,
-        $namespace = null,
-        CronExpression $cronExpression = null,
-        LoggerInterface $logger = null
-    );
-    public function setCronExpression(CronExpression $cronExpression);
+    public function __construct(DI $diObj, $namespace = null, $cronExpression = '');
+    public function setCronExpression($cronExpression);
 
     /**
-     * @return CronExpression
+     * @return string
      */
     public function getCronExpression();
+
     public function setNamespace($namespace);
 
     /**

@@ -19,16 +19,23 @@ You can send custom metrics to AWS CloudWatch like disk/memory usage
 ``` php
 <?php
 
+use AWSCustomMetric\DI;
+use AWSCustomMetric\Logger\DefaultLogger;
 use AWSCustomMetric\Sender as CWSender;
 use AWSCustomMetric\CommandRunner;
 
 try {
+$diObj = new DI();
+$diObj->setCommandRunner(new CommandRunner());
+//Optional
+//$diObj->setLogger(new DefaultLogger());
+
 // Create the Sender
 $cwSender = new CWSender("AWS_KEY", "AWS_SECRET", "AWS_REGION", new CommandRunner());
 $cwSender->setNamespace('Custom/System');
 $cwSender->addPlugin([
-    new DiskUsage(new CommandRunner()),
-    new MemoryUsage(new CommandRunner())
+    new DiskUsage($diObj),
+    new MemoryUsage($diObj)
 ]);
 $cwSender->run();
 } catch (\Exception $e) {
@@ -54,15 +61,22 @@ Each metric plugin can be configured to run at specified time. Time can be defin
 ``` php
 <?php
 
+use AWSCustomMetric\DI;
+use AWSCustomMetric\Logger\DefaultLogger;
 use AWSCustomMetric\Sender as CWSender;
 use AWSCustomMetric\CommandRunner;
 
 try {
+$diObj = new DI();
+$diObj->setCommandRunner(new CommandRunner());
+//Optional
+//$diObj->setLogger(new DefaultLogger());
+
 //metric will be sent at every sender->run calls
-$diskPlugin = new DiskUsage(new CommandRunner(), CronExpression::factory('* * * * *'));
+$diskPlugin = new DiskUsage($diObj, null, '* * * * *');
 
 //metric will be sent at every hour
-$memoryPlugin = new MemoryUsage(new CommandRunner(), CronExpression::factory('0 * * * *'));
+$memoryPlugin = new MemoryUsage($diObj, null, '0 * * * *');
 
 // Create the Sender
 $cwSender = new CWSender("AWS_KEY", "AWS_SECRET", "AWS_REGION", new CommandRunner());

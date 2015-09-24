@@ -29,21 +29,21 @@ class DiskUsage extends BaseMetricPlugin implements MetricPluginInterface
      */
     public function getMetrics()
     {
-        $this->cmdRunner->execute('uname -s');
-        $osName = $this->cmdRunner->getReturnValue();
+        $this->diObj->getCommandRunner()->execute('uname -s');
+        $osName = $this->diObj->getCommandRunner()->getReturnValue();
         switch ($osName) {
             case 'Darwin':
-                $this->cmdRunner->execute('/bin/df -k -l ' . $this->mountPoint . " | awk '{print $8}'");
+                $this->diObj->getCommandRunner()->execute('/bin/df -k -l ' . $this->mountPoint . " | awk '{print $8}'");
                 break;
             case 'Linux':
-                $this->cmdRunner->execute('/bin/df -k -l ' . $this->mountPoint . " | awk '{print $5}'");
+                $this->diObj->getCommandRunner()->execute('/bin/df -k -l ' . $this->mountPoint . " | awk '{print $5}'");
                 break;
             default:
-                $this->cmdRunner->execute('/bin/df -k -l ' . $this->mountPoint . " | awk '{print $5}'");
+                $this->diObj->getCommandRunner()->execute('/bin/df -k -l ' . $this->mountPoint . " | awk '{print $5}'");
                 break;
         }
 
-        $diskUtil = intval($this->cmdRunner->getReturnValue());
+        $diskUtil = intval($this->diObj->getCommandRunner()->getReturnValue());
         if ($diskUtil>0) {
             return [ $this->createNewMetric('DiskUsage', 'Percent', $diskUtil) ];
         } else {

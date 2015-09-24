@@ -1,49 +1,28 @@
 <?php
-/**
- * Copyright (c) Fatih Ustundag <fatih.ustundag@gmail.com>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
 
 namespace AWSCustomMetric\Plugin;
 
-use AWSCustomMetric\Logger\LoggerInterface;
-use AWSCustomMetric\CommandRunner;
+use AWSCustomMetric\DI;
 use AWSCustomMetric\Metric;
-use Cron\CronExpression;
 
 abstract class BaseMetricPlugin implements MetricPluginInterface
 {
     /**
-     * @var CommandRunner
+     * @var DI
      */
-    protected $cmdRunner;
-
-    /**
-     * @var LoggerInterface
-     */
-    protected $logger;
-
+    protected $diObj;
     protected $namespace;
+    protected $cronExpression;
 
-    /**
-     * @var CronExpression
-     */
-    protected $cronExpression = null;
-
-    public function __construct(
-        CommandRunner $cmdRunner,
-        $namespace = null,
-        CronExpression $cronExpression = null,
-        LoggerInterface $logger = null
-    ) {
-        $this->cmdRunner = $cmdRunner;
+    public function __construct(DI $diObj, $namespace = null, $cronExpression = '')
+    {
+        $this->diObj = $diObj;
         if ($namespace) {
             $this->namespace = $namespace;
         }
-        $this->cronExpression = $cronExpression;
-        $this->logger         = $logger;
+        if ($cronExpression) {
+            $this->cronExpression = $cronExpression;
+        }
     }
 
     /**
@@ -63,7 +42,7 @@ abstract class BaseMetricPlugin implements MetricPluginInterface
     }
 
     /**
-     * @return CronExpression
+     * @return string
      */
     public function getCronExpression()
     {
@@ -71,9 +50,9 @@ abstract class BaseMetricPlugin implements MetricPluginInterface
     }
 
     /**
-     * @param CronExpression $cronExpression
+     * @param string $cronExpression
      */
-    public function setCronExpression(CronExpression $cronExpression)
+    public function setCronExpression($cronExpression)
     {
         $this->cronExpression = $cronExpression;
     }

@@ -5,6 +5,7 @@ namespace AWSCustomMetric;
 use Aws\CloudWatch\CloudWatchClient;
 use AWSCustomMetric\Logger\LoggerInterface;
 use AWSCustomMetric\Plugin\MetricPluginInterface;
+use Cron\CronExpression;
 
 class Sender
 {
@@ -250,7 +251,8 @@ class Sender
         $pluginsWillBeRunned = [];
         foreach ($this->plugins as $plugin) {
             if ($plugin instanceof MetricPluginInterface) {
-                if (is_null($plugin->getCronExpression()) || $plugin->getCronExpression()->isDue()) {
+                $pluginCronExpression = $plugin->getCronExpression();
+                if (empty($pluginCronExpression) || CronExpression::factory($pluginCronExpression)->isDue()) {
                     $pluginsWillBeRunned[] = $plugin;
                 }
             }

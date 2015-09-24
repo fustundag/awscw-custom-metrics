@@ -29,9 +29,9 @@ class MemoryUsage extends BaseMetricPlugin implements MetricPluginInterface
      */
     public function getMetrics()
     {
-        $this->cmdRunner->execute('/bin/cat /proc/meminfo');
-        $retVal = $this->cmdRunner->getReturnCode();
-        $memInfoLines = $this->cmdRunner->getOutput();
+        $this->diObj->getCommandRunner()->execute('/bin/cat /proc/meminfo');
+        $retVal = $this->diObj->getCommandRunner()->getReturnCode();
+        $memInfoLines = $this->diObj->getCommandRunner()->getOutput();
         $memInfo = [];
         if ($retVal===0 && is_array($memInfoLines) && count($memInfoLines)>0) {
             foreach ($memInfoLines as $memInfoLine) {
@@ -56,8 +56,8 @@ class MemoryUsage extends BaseMetricPlugin implements MetricPluginInterface
 
             return $metrics;
         } else {
-            if ($this->logger) {
-                $this->logger->error(
+            if ($this->diObj->getLogger()) {
+                $this->diObj->getLogger()->error(
                     '/proc/meminfo parse failed!, RETVAL: ' . $retVal . ', OUT: ' . implode('|', $memInfoLines)
                 );
             }
