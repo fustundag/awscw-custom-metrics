@@ -11,6 +11,10 @@ class HttpCheck extends BaseMetricPlugin implements MetricPluginInterface
     private $url;
     private $method  = 'GET';
     private $headers = [];
+
+    /**
+     * @var float
+     */
     private $timeout = 30.0;
 
     private $statusToCheck = '200';
