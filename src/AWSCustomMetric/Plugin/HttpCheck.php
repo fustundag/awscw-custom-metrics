@@ -188,15 +188,11 @@ class HttpCheck extends BaseMetricPlugin implements MetricPluginInterface
      */
     public function getMetrics()
     {
-        if (!$this->url) {
+        if (!$this->url || !$this->method) {
             if ($this->diObj->getLogger()) {
-                $this->diObj->getLogger()->error('Url is not defined to check!');
-            }
-            return false;
-        }
-        if (!$this->method) {
-            if ($this->diObj->getLogger()) {
-                $this->diObj->getLogger()->error('Method is not defined to check!');
+                $this->diObj->getLogger()->error(
+                    (!$this->url)?'Url is not defined to check!':'Method is not defined to check!'
+                );
             }
             return false;
         }

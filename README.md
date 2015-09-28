@@ -73,10 +73,10 @@ $diObj->setCommandRunner(new CommandRunner());
 //$diObj->setLogger(new DefaultLogger());
 
 //metric will be sent at every sender->run calls
-$diskPlugin = new DiskUsage($diObj, null, '* * * * *');
+$diskPlugin = new DiskUsage($diObj, 'Appname/System', '* * * * *');
 
 //metric will be sent at every hour
-$memoryPlugin = new MemoryUsage($diObj, null, '0 * * * *');
+$memoryPlugin = new MemoryUsage($diObj, 'Appname/System', '0 * * * *');
 
 // Create the Sender
 $cwSender = new CWSender("AWS_KEY", "AWS_SECRET", "AWS_REGION", new CommandRunner());

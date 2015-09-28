@@ -10,13 +10,13 @@ use GuzzleHttp\Client;
  * Class DI
  * @package AWSCustomMetric
  * @method bool setCommandRunner($commandRunner)
- * @method CommandRunner getCommandRunner
+ * @method CommandRunner getCommandRunner()
  * @method bool setLogger($logger)
- * @method LoggerInterface getLogger
+ * @method LoggerInterface getLogger()
  * @method bool setCronExpression($cronExpression)
- * @method CronExpression getCronExpression
+ * @method CronExpression getCronExpression()
  * @method bool setGuzzleHttpClient($client)
- * @method Client getGuzzleHttpClient
+ * @method Client getGuzzleHttpClient()
  */
 
 class DI
