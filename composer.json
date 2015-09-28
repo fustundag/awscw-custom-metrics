@@ -15,7 +15,8 @@
   "require": {
     "php": ">=5.5",
     "aws/aws-sdk-php": "3.2.*@stable",
-    "mtdowling/cron-expression": "1.0.*@stable"
+    "mtdowling/cron-expression": "1.0.*@stable",
+    "guzzlehttp/guzzle": "6.1.*@stable"
   },
   "require-dev": {
     "squizlabs/php_codesniffer": "2.3.*@stable",
