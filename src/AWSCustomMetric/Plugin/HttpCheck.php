@@ -2,6 +2,7 @@
 
 namespace AWSCustomMetric\Plugin;
 
+use AWSCustomMetric\DI;
 use AWSCustomMetric\Metric;
 use GuzzleHttp\TransferStats;
 use Psr\Http\Message\ResponseInterface;
@@ -20,8 +21,25 @@ class HttpCheck extends BaseMetricPlugin implements MetricPluginInterface
     private $statusToCheck = '200';
     private $headersToCheck;
     private $bodyToCheck;
+    private $bodyCheckFunc;
 
     private $responseTime = -1;
+
+    public static $containsFunc;
+    public static $equalsFunc;
+
+    public function __construct(DI $diObj, $namespace = null, $cronExpression = '')
+    {
+        self::$equalsFunc = function ($string, $needle) {
+            return $string==$needle;
+        };
+
+        self::$containsFunc = function ($string, $needle) {
+            return strpos($string, $needle)!==false;
+        };
+
+        parent::__construct($diObj, $namespace, $cronExpression);
+    }
 
     /**
      * @return mixed
@@ -145,12 +163,31 @@ class HttpCheck extends BaseMetricPlugin implements MetricPluginInterface
     }
 
     /**
-     * @param mixed $bodyToCheck
+     * @param string $bodyToCheck
+     * @param callable|null $checkFunc
      */
-    public function setBodyToCheck($bodyToCheck)
+    public function setBodyToCheck($bodyToCheck, $checkFunc = null)
     {
-        $this->bodyToCheck = $bodyToCheck;
+        $this->bodyToCheck   = $bodyToCheck;
+        $this->bodyCheckFunc = $checkFunc?$checkFunc:self::$equalsFunc;
     }
+
+    /**
+     * @return callable
+     */
+    public function getBodyCheckFunc()
+    {
+        return $this->bodyCheckFunc;
+    }
+
+    /**
+     * @param callable $bodyCheckFunc
+     */
+    public function setBodyCheckFunc($bodyCheckFunc)
+    {
+        $this->bodyCheckFunc = $bodyCheckFunc;
+    }
+
 
     private function checkStatusCode($responseStatusCode)
     {
@@ -164,7 +201,7 @@ class HttpCheck extends BaseMetricPlugin implements MetricPluginInterface
         }
         foreach ($this->headersToCheck as $header => $exceptedValue) {
             if (isset($responseHeaders[$header])===false
-                || in_array($exceptedValue, $responseHeaders[$header])===false) {
+                || ($exceptedValue && in_array($exceptedValue, $responseHeaders[$header])===false)) {
                 return false;
             }
         }
@@ -173,7 +210,8 @@ class HttpCheck extends BaseMetricPlugin implements MetricPluginInterface
 
     private function checkResponseBody($responseBody)
     {
-        return !$this->bodyToCheck || $this->bodyToCheck==$responseBody;
+        $bodyCheckFunc = $this->bodyCheckFunc;
+        return !$this->bodyToCheck || $bodyCheckFunc($responseBody, $this->bodyToCheck);
     }
 
     /**

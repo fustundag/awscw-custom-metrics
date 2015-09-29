@@ -246,6 +246,54 @@ class HttpCheckTest extends \Codeception\TestCase\Test
         );
     }
 
+    public function testSetBodyCheckFunc()
+    {
+        $httpCheck = new HttpCheck(new DI());
+
+        $httpCheck->setBodyCheckFunc(HttpCheck::$containsFunc);
+        $this->assertEquals(
+            HttpCheck::$containsFunc,
+            $httpCheck->getBodyCheckFunc(),
+            'HttpCheck::setBodyCheckFunc test failed!'
+        );
+
+        $httpCheck->setBodyCheckFunc(
+            function () {
+                return 1==2;
+            }
+        );
+        $this->assertEquals(
+            function () {
+                return 1==2;
+            },
+            $httpCheck->getBodyCheckFunc(),
+            'HttpCheck::setBodyCheckFunc test2 failed!'
+        );
+    }
+
+    public function testGetBodyCheckFunc()
+    {
+        $httpCheck = new HttpCheck(new DI());
+
+        $this->assertNull(
+            $httpCheck->getBodyCheckFunc(),
+            'HttpCheck::getBodyCheckFunc default value test failed!'
+        );
+
+        $httpCheck->setBodyCheckFunc(
+            function () {
+                return 1==2;
+            }
+        );
+        $this->assertEquals(
+            function () {
+                return 1==2;
+            },
+            $httpCheck->getBodyCheckFunc(),
+            'HttpCheck::getBodyCheckFunc test failed!'
+        );
+    }
+
     public function testSetBodyToCheck()
     {
         $httpCheck = new HttpCheck(new DI());
@@ -255,6 +303,23 @@ class HttpCheckTest extends \Codeception\TestCase\Test
             'body',
             $httpCheck->getBodyToCheck(),
             'HttpCheck::setBodyToCheck test failed!'
+        );
+        $this->assertEquals(
+            HttpCheck::$equalsFunc,
+            $httpCheck->getBodyCheckFunc(),
+            'HttpCheck::setBodyToCheck body check func test failed!'
+        );
+
+        $httpCheck->setBodyToCheck('body2', HttpCheck::$containsFunc);
+        $this->assertEquals(
+            'body2',
+            $httpCheck->getBodyToCheck(),
+            'HttpCheck::setBodyToCheck test2 failed!'
+        );
+        $this->assertEquals(
+            HttpCheck::$containsFunc,
+            $httpCheck->getBodyCheckFunc(),
+            'HttpCheck::setBodyToCheck body check func test2 failed!'
         );
     }
 
@@ -322,7 +387,24 @@ class HttpCheckTest extends \Codeception\TestCase\Test
             new Response(200, ['Content-Type' => 'application/json', 'Content-Length' => 11], 'response OK'),
             new Response(200, ['Content-Type' => 'application/json', 'Content-Length' => 11], 'response OK'),
             new Response(200, ['Content-Type' => 'application/json', 'Content-Length' => 11], 'response OK'),
-            new TransferException('Transfer failed', 500)
+            new TransferException('Transfer failed', 500),
+            new Response(
+                200,
+                ['Content-Type' => 'application/json', 'Content-Length' => 11],
+                'amount=0.0&cmd=SALE&status=-10220&subscriptionType=&batchID=1443429052723'
+                .'&part=905365853383&txnID=1443429052724'
+            ),
+            new Response(
+                200,
+                ['Content-Type' => 'application/json', 'Content-Length' => 11],
+                'amount=0.0&cmd=SALE&status=-10220&subscriptionType=&batchID=1443429052723'
+                .'&part=905365853383&txnID=1443429052724'
+            ),
+            new Response(
+                200,
+                ['Content-Type' => 'application/json', 'X-Header-Exists' => 'random value'],
+                'response OK'
+            ),
         ]);
         $handler = HandlerStack::create($mock);
         $client  = new Client(['handler' => $handler]);
@@ -370,6 +452,27 @@ class HttpCheckTest extends \Codeception\TestCase\Test
         $metrics = $httpCheck->getMetrics();
         $this->assertCount(1, $metrics, 'HttpCheck::getMetrics exception test failed!');
         $this->assertEquals($expectedFailMetric, $metrics[0], 'HttpCheck::getMetrics exception test failed!');
+
+        $httpCheck->setHeadersToCheck([]);
+        $httpCheck->setBodyToCheck('status=-10220', HttpCheck::$containsFunc);
+        $metrics = $httpCheck->getMetrics();
+        $this->assertCount(1, $metrics, 'HttpCheck::getMetrics test failed!');
+        $this->assertEquals($expectedMetric, $metrics[0], 'HttpCheck::getMetrics body contains test failed!');
+
+        $httpCheck->setBodyToCheck('amount=0.0', HttpCheck::$containsFunc);
+        $metrics = $httpCheck->getMetrics();
+        $this->assertCount(1, $metrics, 'HttpCheck::getMetrics test failed!');
+        $this->assertEquals(
+            $expectedMetric,
+            $metrics[0],
+            'HttpCheck::getMetrics body contains at the beginning test failed!'
+        );
+
+        $httpCheck->setHeadersToCheck(['X-Header-Exists' => '']);
+        $httpCheck->setBodyToCheck('');
+        $metrics = $httpCheck->getMetrics();
+        $this->assertCount(1, $metrics, 'HttpCheck::getMetrics test failed!');
+        $this->assertEquals($expectedMetric, $metrics[0], 'HttpCheck::getMetrics headers exists test failed!');
 
     }
 }
