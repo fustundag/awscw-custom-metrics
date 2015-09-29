@@ -20,7 +20,7 @@ class UnitHelper extends \Codeception\Module
                 'MetricName' => $metric->getName(),
                 'Unit' => $metric->getUnit(),
                 'Value' => $metric->getValue(),
-                'Timestamp' => date('Y-m-d') . 'T' . date('H:i:s') . 'Z'
+                'Timestamp' => gmdate('Y-m-d') . 'T' . gmdate('H:i:s') . 'Z'
             ];
         }
         return [
