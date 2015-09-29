@@ -392,13 +392,13 @@ class HttpCheckTest extends \Codeception\TestCase\Test
                 200,
                 ['Content-Type' => 'application/json', 'Content-Length' => 11],
                 'amount=0.0&cmd=SALE&status=-10220&subscriptionType=&batchID=1443429052723'
-                .'&part=905365853383&txnID=1443429052724'
+                .'&part=999999&txnID=1443429052724'
             ),
             new Response(
                 200,
                 ['Content-Type' => 'application/json', 'Content-Length' => 11],
                 'amount=0.0&cmd=SALE&status=-10220&subscriptionType=&batchID=1443429052723'
-                .'&part=905365853383&txnID=1443429052724'
+                .'&part=999999&txnID=1443429052724'
             ),
             new Response(
                 200,
