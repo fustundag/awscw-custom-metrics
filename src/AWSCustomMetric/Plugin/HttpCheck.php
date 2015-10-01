@@ -252,7 +252,10 @@ class HttpCheck extends BaseMetricPlugin implements MetricPluginInterface
             if ($this->checkResponse($response)===false) {
                 return [$this->createNewMetric('HttpCheckFail', 'Count', 1)];
             } else {
-                return [$this->createNewMetric('HttpCheck', 'Seconds', $this->responseTime)];
+                return [
+                    $this->createNewMetric('HttpCheck', 'Seconds', $this->responseTime),
+                    $this->createNewMetric('HttpCheckFail', 'Count', 0)
+                ];
             }
         } catch (\Exception $e) {
             if ($this->diObj->getLogger()) {

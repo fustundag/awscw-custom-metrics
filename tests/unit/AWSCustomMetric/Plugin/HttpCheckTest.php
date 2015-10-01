@@ -370,6 +370,12 @@ class HttpCheckTest extends \Codeception\TestCase\Test
         $expectedMetric->setValue('0');
         $expectedMetric->setNamespace('CustomMetric/Test');
 
+        $expectedMetric2 = new Metric();
+        $expectedMetric2->setName('HttpCheckFail');
+        $expectedMetric2->setUnit('Count');
+        $expectedMetric2->setValue('0');
+        $expectedMetric2->setNamespace('CustomMetric/Test');
+
         $expectedFailMetric = new Metric();
         $expectedFailMetric->setName('HttpCheckFail');
         $expectedFailMetric->setUnit('Count');
@@ -415,8 +421,9 @@ class HttpCheckTest extends \Codeception\TestCase\Test
         $httpCheck->setUrl('https://github.com/fustundag/awscw-custom-metrics');
 
         $metrics = $httpCheck->getMetrics();
-        $this->assertCount(1, $metrics, 'HttpCheck::getMetrics test failed!');
+        $this->assertCount(2, $metrics, 'HttpCheck::getMetrics test failed!');
         $this->assertEquals($expectedMetric, $metrics[0], 'HttpCheck::getMetrics expected metric test failed!');
+        $this->assertEquals($expectedMetric2, $metrics[1], 'HttpCheck::getMetrics expected fail metric test failed!');
         $metrics = $httpCheck->getMetrics();
         $this->assertCount(1, $metrics, 'HttpCheck::getMetrics test failed!');
         $this->assertEquals($expectedFailMetric, $metrics[0], 'HttpCheck::getMetrics check status test failed!');
@@ -425,16 +432,18 @@ class HttpCheckTest extends \Codeception\TestCase\Test
         $httpCheck->setBodyToCheck('response OK');
 
         $metrics = $httpCheck->getMetrics();
-        $this->assertCount(1, $metrics, 'HttpCheck::getMetrics test failed!');
+        $this->assertCount(2, $metrics, 'HttpCheck::getMetrics test failed!');
         $this->assertEquals($expectedMetric, $metrics[0], 'HttpCheck::getMetrics body check ok test failed!');
+        $this->assertEquals($expectedMetric2, $metrics[1], 'HttpCheck::getMetrics expected fail metric test failed!');
         $metrics = $httpCheck->getMetrics();
         $this->assertCount(1, $metrics, 'HttpCheck::getMetrics test failed!');
         $this->assertEquals($expectedFailMetric, $metrics[0], 'HttpCheck::getMetrics body check fail test failed!');
 
         $httpCheck->setHeadersToCheck(['Content-Type' => 'application/json']);
         $metrics = $httpCheck->getMetrics();
-        $this->assertCount(1, $metrics, 'HttpCheck::getMetrics test failed!');
+        $this->assertCount(2, $metrics, 'HttpCheck::getMetrics test failed!');
         $this->assertEquals($expectedMetric, $metrics[0], 'HttpCheck::getMetrics headers check ok test failed!');
+        $this->assertEquals($expectedMetric2, $metrics[1], 'HttpCheck::getMetrics expected fail metric test failed!');
 
         $httpCheck->setHeadersToCheck(['Content-Type' => 'text/html']);
         $metrics = $httpCheck->getMetrics();
@@ -456,23 +465,26 @@ class HttpCheckTest extends \Codeception\TestCase\Test
         $httpCheck->setHeadersToCheck([]);
         $httpCheck->setBodyToCheck('status=-10220', HttpCheck::$containsFunc);
         $metrics = $httpCheck->getMetrics();
-        $this->assertCount(1, $metrics, 'HttpCheck::getMetrics test failed!');
+        $this->assertCount(2, $metrics, 'HttpCheck::getMetrics test failed!');
         $this->assertEquals($expectedMetric, $metrics[0], 'HttpCheck::getMetrics body contains test failed!');
+        $this->assertEquals($expectedMetric2, $metrics[1], 'HttpCheck::getMetrics expected fail metric test failed!');
 
         $httpCheck->setBodyToCheck('amount=0.0', HttpCheck::$containsFunc);
         $metrics = $httpCheck->getMetrics();
-        $this->assertCount(1, $metrics, 'HttpCheck::getMetrics test failed!');
+        $this->assertCount(2, $metrics, 'HttpCheck::getMetrics test failed!');
         $this->assertEquals(
             $expectedMetric,
             $metrics[0],
             'HttpCheck::getMetrics body contains at the beginning test failed!'
         );
+        $this->assertEquals($expectedMetric2, $metrics[1], 'HttpCheck::getMetrics expected fail metric test failed!');
 
         $httpCheck->setHeadersToCheck(['X-Header-Exists' => '']);
         $httpCheck->setBodyToCheck('');
         $metrics = $httpCheck->getMetrics();
-        $this->assertCount(1, $metrics, 'HttpCheck::getMetrics test failed!');
+        $this->assertCount(2, $metrics, 'HttpCheck::getMetrics test failed!');
         $this->assertEquals($expectedMetric, $metrics[0], 'HttpCheck::getMetrics headers exists test failed!');
+        $this->assertEquals($expectedMetric2, $metrics[1], 'HttpCheck::getMetrics expected fail metric test failed!');
 
     }
 }
