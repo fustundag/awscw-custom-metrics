@@ -1,4 +1,4 @@
-FROM centos:centos7
+FROM centos:latest
 MAINTAINER Fatih Üstündağ <fatih.ustundag@gmail.com>
 
 RUN yum install -y epel-release

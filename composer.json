@@ -14,7 +14,8 @@
   ],
   "require": {
     "php": ">=5.5",
-    "aws/aws-sdk-php": "3.2.*@stable",
+    "ext-memcached": "*",
+    "aws/aws-sdk-php": "3.*@stable",
     "mtdowling/cron-expression": "1.0.*@stable",
     "guzzlehttp/guzzle": "6.1.*@stable"
   },
