@@ -5,6 +5,7 @@ namespace AWSCustomMetric\Plugin;
 use AWSCustomMetric\DI;
 use AWSCustomMetric\Logger\DefaultLogger;
 use AWSCustomMetric\Metric;
+use Codeception\Util\Stub;
 
 class MemcachedCheckTest extends \Codeception\TestCase\Test
 {
@@ -105,6 +106,18 @@ class MemcachedCheckTest extends \Codeception\TestCase\Test
         );
     }
 
+    public function testSetMemcached()
+    {
+        $memcached = new \Memcached();
+        $checkObj  = new MemcachedCheck(new DI());
+        $checkObj->setMemcached($memcached);
+        $this->assertEquals(
+            $memcached,
+            $checkObj->getMemcached(),
+            'MemcachedCheck::setMemcached test failed!'
+        );
+    }
+
     public function testGetMetrics()
     {
         $expectedMetric = new Metric();
@@ -126,6 +139,7 @@ class MemcachedCheckTest extends \Codeception\TestCase\Test
 
         $memcachedCheck->setServer('127.0.0.1');
         $memcachedCheck->setPort('11211');
+        $memcachedCheck->setMemcached(new \Memcached());
 
         $metrics = $memcachedCheck->getMetrics();
         $this->assertCount(1, $metrics, 'MemcachedCheck::getMetrics test failed!');
@@ -136,5 +150,40 @@ class MemcachedCheckTest extends \Codeception\TestCase\Test
         $metrics = $memcachedCheck->getMetrics();
         $this->assertCount(1, $metrics, 'MemcachedCheck::getMetrics test failed!');
         $this->assertEquals($expectedFailMetric, $metrics[0], 'MemcachedCheck::getMetrics check status test failed!');
+
+        $fakeMemcached = Stub::make('\Memcached', [
+            'addServer' => function () {
+
+            },
+            'resetServerList' => function () {
+
+            },
+            'set' => function () {
+                return true;
+            },
+            'get'  => 2
+        ]);
+        $memcachedCheck->setMemcached($fakeMemcached);
+        $metrics = $memcachedCheck->getMetrics();
+        $this->assertCount(1, $metrics, 'MemcachedCheck::getMetrics test failed!');
+        $this->assertEquals($expectedFailMetric, $metrics[0], 'MemcachedCheck::getMetrics check status test failed!');
+
+        $fakeMemcached = Stub::make('\Memcached', [
+            'addServer' => function () {
+
+            },
+            'resetServerList' => function () {
+
+            },
+            'set' => function () {
+                throw new \Exception('fake exception on memcached set');
+            },
+            'get'  => 2
+        ]);
+        $memcachedCheck->setMemcached($fakeMemcached);
+        $metrics = $memcachedCheck->getMetrics();
+        $this->assertCount(1, $metrics, 'MemcachedCheck::getMetrics test failed!');
+        $this->assertEquals($expectedFailMetric, $metrics[0], 'MemcachedCheck::getMetrics check status test failed!');
+
     }
 }

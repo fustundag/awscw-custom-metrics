@@ -71,12 +71,7 @@ class ServicePortCheck extends BaseMetricPlugin implements MetricPluginInterface
     {
         try {
             $fp = fsockopen($this->server, $this->port, $errno, $errstr, 5);
-
-            if (!$fp) {
-                return [
-                    $this->createNewMetric($this->getServiceName() . 'CheckFail', 'Count', 1)
-                ];
-            } else {
+            if ($fp) {
                 fclose($fp);
                 return [
                     $this->createNewMetric($this->getServiceName() . 'CheckFail', 'Count', 0)
@@ -89,7 +84,7 @@ class ServicePortCheck extends BaseMetricPlugin implements MetricPluginInterface
                     .' Service:' . $this->getServiceName() . ', Msg: ' . $e->getMessage()
                 );
             }
-            return [$this->createNewMetric($this->getServiceName() . 'CheckFail', 'Count', 1)];
         }
+        return [$this->createNewMetric($this->getServiceName() . 'CheckFail', 'Count', 1)];
     }
 }

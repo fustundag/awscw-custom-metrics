@@ -7,6 +7,10 @@ use AWSCustomMetric\Metric;
 
 class MemcachedCheck extends BaseMetricPlugin implements MetricPluginInterface
 {
+    /**
+     * @var \Memcached
+     */
+    private $memcached;
     private $server;
     private $port;
 
@@ -29,6 +33,7 @@ class MemcachedCheck extends BaseMetricPlugin implements MetricPluginInterface
     public function setServer($server)
     {
         $this->server = $server;
+        $this->setMemcached();
     }
 
     /**
@@ -45,6 +50,29 @@ class MemcachedCheck extends BaseMetricPlugin implements MetricPluginInterface
     public function setPort($port)
     {
         $this->port = $port;
+        $this->setMemcached();
+    }
+
+    /**
+     * @return \Memcached
+     */
+    public function getMemcached()
+    {
+        return $this->memcached;
+    }
+
+    /**
+     * @param \Memcached|null $memcached
+     */
+    public function setMemcached($memcached = null)
+    {
+        if ($memcached) {
+            $this->memcached = $memcached;
+        }
+        if ($this->memcached) {
+            $this->memcached->resetServerList();
+            $this->memcached->addServer($this->server, $this->port);
+        }
     }
 
     /**
@@ -53,16 +81,14 @@ class MemcachedCheck extends BaseMetricPlugin implements MetricPluginInterface
     public function getMetrics()
     {
         try {
-            $memcached = new \Memcached();
-            $memcached->addServer($this->server, $this->port);
-            $status = $memcached->set('awscustommetrics.test', 1, 2);
+            $status = $this->memcached->set('awscustommetrics.test', 1, 2);
 
             if ($status===false) {
                 return [
                     $this->createNewMetric('MemcachedCheckFail', 'Count', 1)
                 ];
             } else {
-                $testValue = $memcached->get('awscustommetrics.test');
+                $testValue = $this->memcached->get('awscustommetrics.test');
                 if (!$testValue || $testValue!==1) {
                     return [
                         $this->createNewMetric('MemcachedCheckFail', 'Count', 1)
