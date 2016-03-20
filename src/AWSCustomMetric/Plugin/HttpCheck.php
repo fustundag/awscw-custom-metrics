@@ -23,6 +23,9 @@ class HttpCheck extends BaseMetricPlugin implements MetricPluginInterface
     private $bodyToCheck;
     private $bodyCheckFunc;
 
+    /**
+     * @var float
+     */
     private $responseTime = -1;
 
     public static $containsFunc;
