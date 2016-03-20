@@ -39,6 +39,14 @@ class Metric
         'None'
     ];
 
+    public function __construct($name = null, $unit = null, $value = null, $namespace = null)
+    {
+        $this->setName($name);
+        $this->setUnit($unit);
+        $this->setValue($value);
+        $this->setNamespace($namespace);
+    }
+
     /**
      * @return mixed
      */

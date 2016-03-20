@@ -17,6 +17,21 @@ class MetricTest extends \Codeception\TestCase\Test
     }
 
     // tests
+    public function testConstructor()
+    {
+        $metric = new Metric('testname');
+        $this->tester->assertEquals('testname', $metric->getName(), 'Metric::Constructor failed!');
+        $this->tester->assertNull($metric->getNamespace(), 'Metric::Constructor failed!');
+        $this->tester->assertNull($metric->getUnit(), 'Metric::Constructor failed!');
+        $this->tester->assertNull($metric->getValue(), 'Metric::Constructor failed!');
+
+        $metric = new Metric('testname', 'Count', '1', 'testns');
+        $this->tester->assertEquals('testname', $metric->getName(), 'Metric::Constructor failed!');
+        $this->tester->assertEquals('Count', $metric->getUnit(), 'Metric::Constructor failed!');
+        $this->tester->assertEquals('1', $metric->getValue(), 'Metric::Constructor failed!');
+        $this->tester->assertEquals('testns', $metric->getNamespace(), 'Metric::Constructor failed!');
+    }
+
     public function testGetName()
     {
         $metric = new Metric();
