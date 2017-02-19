@@ -1,0 +1,12 @@
+aws-custom-metrics:
+  hostname: aws-custom-metrics-docker
+  container_name: aws-custom-metrics-container
+  image: fatihustundag/centos-php7.1
+  environment:
+    APPLICATION_ENV: development
+    HISTFILE: /root/bash_history_dir/.bash_history
+  command: sh /init.sh
+  volumes:
+    - ./config-files/init.sh:/init.sh
+    - ../:/data/project
+    - /root/bash_history_dir
