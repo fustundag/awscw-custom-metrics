@@ -13,16 +13,16 @@
     }
   ],
   "require": {
-    "php": ">=5.5",
+    "php": ">=5.6",
     "ext-memcached": "*",
     "aws/aws-sdk-php": "3.*@stable",
-    "mtdowling/cron-expression": "1.0.*@stable",
-    "guzzlehttp/guzzle": "6.1.*@stable"
+    "mtdowling/cron-expression": "1.2.*@stable",
+    "guzzlehttp/guzzle": "6.2.*@stable"
   },
   "require-dev": {
-    "squizlabs/php_codesniffer": "2.3.*@stable",
-    "phpmd/phpmd": "2.2.*@stable",
-    "codeception/codeception":"2.1.*@stable"
+    "squizlabs/php_codesniffer": "2.8.*@stable",
+    "phpmd/phpmd": "2.6.*@stable",
+    "codeception/codeception":"2.2.*@stable"
   },
   "autoload": {
     "psr-4": {"AWSCustomMetric\\": "src/AWSCustomMetric"}

@@ -9,6 +9,9 @@ use Cron\CronExpression;
 
 class Sender
 {
+    /**
+     * @var CloudWatchClient
+     */
     private $cloudWatchClient = null;
     private $awsKey     = null;
     private $awsSecret  = null;
