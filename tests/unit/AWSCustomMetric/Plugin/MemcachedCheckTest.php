@@ -153,10 +153,8 @@ class MemcachedCheckTest extends \Codeception\TestCase\Test
 
         $fakeMemcached = Stub::make('\Memcached', [
             'addServer' => function () {
-
             },
             'resetServerList' => function () {
-
             },
             'set' => function () {
                 return true;
@@ -170,10 +168,8 @@ class MemcachedCheckTest extends \Codeception\TestCase\Test
 
         $fakeMemcached = Stub::make('\Memcached', [
             'addServer' => function () {
-
             },
             'resetServerList' => function () {
-
             },
             'set' => function () {
                 throw new \Exception('fake exception on memcached set');
@@ -184,6 +180,5 @@ class MemcachedCheckTest extends \Codeception\TestCase\Test
         $metrics = $memcachedCheck->getMetrics();
         $this->assertCount(1, $metrics, 'MemcachedCheck::getMetrics test failed!');
         $this->assertEquals($expectedFailMetric, $metrics[0], 'MemcachedCheck::getMetrics check status test failed!');
-
     }
 }
