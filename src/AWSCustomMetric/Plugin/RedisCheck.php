@@ -96,7 +96,7 @@ class RedisCheck extends BaseMetricPlugin implements MetricPluginInterface
                 return false;
             }
             if ($redisKeyCount[0]>0) {
-                $this->diObj->getCommandRunner()->execute($this->getRedisCliCmd() . ' --raw keys *');
+                $this->diObj->getCommandRunner()->execute($this->getRedisCliCmd() . ' --raw keys "*"');
                 $retVal = $this->diObj->getCommandRunner()->getReturnCode();
                 $redisKeyList = $this->diObj->getCommandRunner()->getOutput();
                 if ($retVal!==0) {
