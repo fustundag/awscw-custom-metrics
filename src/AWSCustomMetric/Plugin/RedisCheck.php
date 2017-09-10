@@ -85,7 +85,6 @@ class RedisCheck extends BaseMetricPlugin implements MetricPluginInterface
             $this->diObj->getCommandRunner()->execute($this->getRedisCliCmd() . ' --raw dbsize');
             $retVal = $this->diObj->getCommandRunner()->getReturnCode();
             $redisKeyCount = $this->diObj->getCommandRunner()->getOutput();
-            error_log('redisKeyCount: ' . json_encode($redisKeyCount).PHP_EOL, 3, '/tmp/php_error.log');
 
             if ($retVal!==0) {
                 if ($this->diObj->getLogger()) {
